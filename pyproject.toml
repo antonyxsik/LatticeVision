@@ -1,7 +1,7 @@
 [project]
 name = "latticevision"
 version = "0.1.0"
-description = "TransUNet models as neural estimators for massive nonstationary spatial data"
+description = "Image to image networks for modeling big non-stationary spatial data"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
