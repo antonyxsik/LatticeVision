@@ -1,12 +1,11 @@
 # LatticeVision
 
-Fill this out. testing anonymous updates. 
 
 # Installation
 
 ## R (data generation)
 
-> TODO
+
 
 ## Python (Model training and inference)
 
