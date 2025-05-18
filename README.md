@@ -26,6 +26,8 @@ You can install the necessary dependencies and create a virtual environment usin
 
 If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`
 
+---
+
 ## Citation
 
 Please use the following BibTeX to cite this work: 
