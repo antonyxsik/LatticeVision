@@ -10,7 +10,17 @@ The paper is currently available on [arXiv](https://arxiv.org/abs/2505.09803).
 
 ---
 
-# Installation
+# Getting Started
+
+Prior to running this code, one will need to download both `R` and `Python`, clone this repository, and install all necessary dependencies. 
+
+The `R` programming language may be downloaded [here](https://cran.r-project.org/bin/windows/base/). We strongly recommend downloading [`RStudio`](https://posit.co/download/rstudio-desktop/) to open and work with any of the R scripts. 
+
+The `Python` programming language may be downloaded [here](https://www.python.org/downloads/). We use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) as our package manager. 
+
+You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`.
+
+If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`. Both of these will install the package `latticevision`, which contains our primary source code. 
 
 ## R (data generation)
 
