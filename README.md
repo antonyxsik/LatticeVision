@@ -10,7 +10,7 @@ The paper is currently available on [arXiv](https://arxiv.org/abs/2505.09803).
 
 ---
 
-# Installation
+## Installation
 
 Prior to running this code, one will need to download both `R` and `Python`, clone this repository, and install all necessary dependencies. 
 
@@ -22,15 +22,26 @@ Prior to running this code, one will need to download both `R` and `Python`, clo
 
 - **Dependencies:** You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`. If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`. Both install the `latticevision` package, which contains our primary source code. 
 
-## R (data generation)
+## Quick Start 
+
+- Download sample data and model wghts from google drive. all scripts currently point towards sample data.
+- run make test to run all of the tests.
+- a few additional make commands.
+- describe the notebooks and how they provide a good starting point.
 
 
+## Reproducing our results. 
 
-## Python (Model training and inference)
+### Data Generation
+- In order to reproduce our results, one must first generate the data.
 
-You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`.
+### Train Models and Test on Synthetic Data
+- Run the scripts, these also will give you all of the simulated data results.
 
-If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`
+
+### Climate Application
+- do the exploring_cesm notebook, then run the R script which does the climate things. 
+
 
 ---
 
