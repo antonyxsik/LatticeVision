@@ -1,6 +1,6 @@
 # LatticeVision (UNDER CONSTRUCTION)
 
-This repository contains all of the accompanying code for the paper: 
+This repository contains everything you need to train image-to-image (I2I) neural networks—using both U-Net and transformer-based architectures—for non-stationary parameter estimation on large spatial datasets. You’ll find tutorial notebooks, data-generation scripts, training and evaluation procedures, and example applications to climate-model outputs. All code accompanies our paper:
 
 *LatticeVision: Image to Image Networks for Modeling Non-Stationary Spatial Data*
 
@@ -12,15 +12,16 @@ The paper is currently available on [arXiv](https://arxiv.org/abs/2505.09803).
 
 ## Installation
 
-Prior to running this code, one will need to download both `R` and `Python`, clone this repository, and install all necessary dependencies. 
+Prior to running this code, one will need to download `Python`, `R` and `RStudio`, clone this repository, and install all necessary dependencies. 
 
-- **R:** The `R` programming language may be downloaded [here](https://cran.r-project.org/bin/windows/base/). We strongly recommend downloading [`RStudio`](https://posit.co/download/rstudio-desktop/) to open and work with any of the `R` scripts (training data and synthetic field generation). 
+- **R:** The `R` programming language may be downloaded [here](https://cran.r-project.org/bin/windows/base/). We recommend [`RStudio`](https://posit.co/download/rstudio-desktop/) for opening and working with the `R` scripts (training data and synthetic field generation). 
 
 - **Python:** The `Python` programming language may be downloaded [here](https://www.python.org/downloads/). We use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) as our package manager. 
 
 - **Cloning this repo:** This repository can be cloned by running `git clone https://github.com/antonyxsik/LatticeVision.git` in your terminal. 
 
-- **Dependencies:** You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`. If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`. Both install the `latticevision` package, which contains our primary source code. 
+- **Dependencies:**
+- - You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`. If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`. Both install the `latticevision` package, which contains our primary source code. All dependencies 
 
 ## Quick Start 
 
