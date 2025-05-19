@@ -1,4 +1,4 @@
-# LatticeVision
+# LatticeVision (UNDER CONSTRUCTION)
 
 This repository contains all of the accompanying code for the paper: 
 
