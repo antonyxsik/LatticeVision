@@ -21,7 +21,8 @@ Prior to running this code, one will need to download `Python`, `R` and `RStudio
 - **Cloning this repo:** This repository can be cloned by running `git clone https://github.com/antonyxsik/LatticeVision.git` in your terminal. 
 
 - **Dependencies:**
-- - You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`. If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`. Both install the `latticevision` package, which contains our primary source code. All dependencies 
+  - For `Python`: You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`. If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`. Both install the `latticevision` package, which contains our primary source code.
+  - For `R`: All dependencies can be downloaded by running `R_scripts/required_packages.R`.
 
 ## Quick Start 
 
