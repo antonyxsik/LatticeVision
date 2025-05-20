@@ -34,7 +34,7 @@ git clone https://github.com/antonyxsik/LatticeVision.git
     uv sync
     ```
    
-  If you do not wish to use `uv`, you can create a virtual environment however you wish, and run 
+    If you do not wish to use `uv`, you can create a virtual environment however you wish, and run 
 
     ```
     pip install -r requirements.txt
@@ -59,7 +59,7 @@ To get started with our code, download our sample data, network weights (for bot
   make test
   ```
 
- to run all tests, and run 
+  to run all tests, and run 
 
   ```
   make help
