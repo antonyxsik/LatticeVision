@@ -28,6 +28,27 @@ from latticevision.img2img import TransUNet, UNet, ViT
 from latticevision.img2img.train import train_model, TrainingConfig
 from latticevision.img2img.eval import eval_model
 
+# check for data locally, if not found, download from gdrive
+DATA_DIR = "data"
+DATA_FILE = "I2I_sample_data.h5"
+DATA_PATH = os.path.join(DATA_DIR, DATA_FILE)
+GDRIVE_ID = "1Hz1aRc49sBy0d74iwkfxu_djzwZsEW39"
+GDRIVE_URL = f"https://drive.google.com/uc?id={GDRIVE_ID}"
+
+
+if not os.path.isdir(DATA_DIR):
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+if not os.path.isfile(DATA_PATH):
+    try:
+        import gdown
+    except ImportError:
+        raise ImportError(
+            "Please install gdown (`pip install gdown`) so the test can auto-download the data."
+        )
+    print(f"{DATA_PATH} not found. Downloading from Google Drive...")
+    gdown.download(GDRIVE_URL, DATA_PATH, quiet=False)
+
 
 @pytest.mark.parametrize(
 	("model_cls", "pos_embed_cls"),
