@@ -49,22 +49,22 @@ To get started with our code, download our sample data, network weights (for bot
 
 1. Prepare `data/` and `results/` folders: 
 
-  - Create `data/` in the root of this project (ignored by Git), then download everything into it from the `data/` folder in Google Drive (sample synthetic data and climate fields). 
-  - Create `results/` in the root of this project (also ignored), with subfolders `clim_outputs/` and `model_wghts/`. Download the corresponding Google Drive components for both folders. 
+   - Create `data/` in the root of this project (ignored by Git), then download everything into it from the `data/` folder in Google Drive (sample synthetic data and climate fields). 
+   - Create `results/` in the root of this project (also ignored), with subfolders `clim_outputs/` and `model_wghts/`. Download the corresponding Google Drive components for both folders. 
 
 2. Explore our tutorial/demo style notebooks in `notebooks/` (`i2i_demo.ipynb`, `cnn_demo.ipynb`, `cesm_application.ipynb`) to get a sense for our core workflows and codebase. These should all point to/utilize the network weights and sample data that you downloaded. 
 
 3. Optionally, run 
 
-  ```
-  make test
-  ```
+   ```
+   make test
+   ```
 
   to run all tests, and run 
 
-  ```
-  make help
-  ``` 
+   ```
+   make help
+   ``` 
 
  to print out other available commands. 
 
