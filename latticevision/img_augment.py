@@ -69,7 +69,7 @@ def random_translate_clim(fields, params):
 	xshift = random.randint(-cols, cols)
 	yshift = random.randint(-rows, rows)
 
-	# roll fiels
+	# roll fields
 	fields = torch.roll(fields, shifts=xshift, dims=-1)
 	fields = torch.roll(fields, shifts=yshift, dims=-2)
 
