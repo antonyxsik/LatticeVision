@@ -10,7 +10,7 @@ The paper is currently available on [arXiv](https://arxiv.org/abs/2505.09803).
 
 <p align="center">
   <img src="results/figures/flowchart_v5.png" alt="The main workflow of LatticeVision." width="700"/>
-</p>
+<p align="center"><em>Figure: The main workflow of LatticeVision. </em></p>
 
 ---
 
@@ -22,7 +22,7 @@ Prior to running this code, one will need to download `Python`, `R` and `RStudio
 
 - **Python:** The `Python` programming language may be downloaded [here](https://www.python.org/downloads/). We use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) as our package manager. 
 
-- **Cloning this repo:** This repository can be cloned by running `git clone https://github.com/antonyxsik/LatticeVision.git` in your terminal. 
+- **Cloning this repo:** This repository can be cloned by running ``git clone https://github.com/antonyxsik/LatticeVision.git`` in your terminal. 
 
 - **Dependencies:**
   - For `Python`: You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`. If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`. Both install the `latticevision` package, which contains our primary source code.
