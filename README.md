@@ -48,6 +48,7 @@ git clone https://github.com/antonyxsik/LatticeVision.git
 To get started with our code, download our sample data, network weights (for both a STUN and CNN25 network trained on 30 replicates), and their climate application results from [this Google Drive folder](https://drive.google.com/drive/folders/1OcgHHqqNmK48qdvHCP_PQpXXKq_EYCWD?usp=sharing):
 
 1. Prepare `data/` and `results/` folders: 
+
   - Create `data/` in the root of this project (ignored by Git), then download everything into it from the `data/` folder in Google Drive (sample synthetic data and climate fields). 
   - Create `results/` in the root of this project (also ignored), with subfolders `clim_outputs/` and `model_wghts/`. Download the corresponding Google Drive components for both folders. 
 
@@ -85,7 +86,8 @@ In order to reproduce our results, one must first generate the data:
 - **_All_** CNNs can be trained by running `notebooks/cnn_trainloop.py`.
 - Both of these scripts train the networks, save their weights in `results/model_wghts/`, evaluate them on synthetic test data (results saved in `results/metrics/`), and then pass the climate model fields through the networks (saved in `results/clim_outputs/`). 
 
-**_Note_**: These scripts will train 4 U-Nets, 16 ViTs, 16 STUNs, and 12 CNNs due to different combinations of hyperparameters (n_replicates, positional embeddings, etc.). This may be quite computationally intensive. We highly recommend modifying the lists in the scripts (that determine which hyperparams to loop through) to reflect the networks that you are interested in training and evaluating.  
+**_Note_**: 
+These scripts will train 4 U-Nets, 16 ViTs, 16 STUNs, and 12 CNNs due to different combinations of hyperparameters (n_replicates, positional embeddings, etc.). This may be quite computationally intensive. We highly recommend modifying the lists in the scripts (that determine which hyperparams to loop through) to reflect the networks that you are interested in training and evaluating.  
 
 
 ### Climate Application
