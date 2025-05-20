@@ -1,27 +1,27 @@
+##########             IMPORTANT              ###########
+#-------------------------------------------------------#
+# Navigate to "Session" in the top left of RStudio and
+# click on "Set Working Directory" and then 
+# choose "To Source File Location". 
+# Now you can run the script. 
+#-------------------------------------------------------#
+
 library(LatticeKrig)
 library(spam64)
 library(tictoc)
 library(rhdf5)
-
-rm(list=ls())
-setwd("C:/Users/anton/Desktop/Research/Paper_3/LatticeVision")
-
-
-###########################################
-###### Helper Functions ######
-###########################################
+library(here)
+# helper functions
+source(here("R_scripts", "helper_funcs.R"))
 
 
-# predict functions for param grids 
-predict.surfaceGrid<- function(object,x){
-  interp.surface( object, x)
-}
-
-predict.constantValue<- function(object,x){
-  n<- length(object$values)
-  m<- nrow( x)
-  return( matrix( object$values, nrow=m, ncol=n, byrow=TRUE ) )
-}
+# Some choices to make: 
+# total number of simulated fields 
+N_SIMS <- 80000
+# sidelength of the field (window size)
+sidelen <- 25 
+# Other options can be tweaked in the
+# "Experimental Setup and Hyperparameters" section below. 
 
 
 ###########################################
@@ -165,10 +165,9 @@ hist(log(awghts-4), main = "log kappas", col = "lightgreen")
 hist(awghts, main = "awghts", col = "gold")
 par(mfrow = c(1,1))
 
-N_SIMS <- 80000
+
 n_replicates <- 30 
 n_buffer <- 5
-sidelen <- 25 
 verbose <- FALSE
 sanity_plotting <- FALSE
 random_seed <- 777
@@ -178,6 +177,7 @@ random_seed <- 777
 ########## Simulation and Saving ##########
 ###########################################
 
+# Simulation
 dataset <- generate_cnn_data(
   N_SIMS = N_SIMS, 
   n_replicates = n_replicates,
@@ -190,10 +190,9 @@ dataset <- generate_cnn_data(
 )
 
 # Saving the dataset 
-########################################################
 
-file_name <- "data/CNN_data.h5"
-#file_name <- data/CNN_test_data.h5
+file_name <- here("data", "CNN_data.h5")
+#file_name <- here("data", "CNN_sample_data.h5")
 dataset_name <- "fields"
 
 nx <- sidelen^2
@@ -229,27 +228,25 @@ h5closeAll()
 #### Loading in the Data (Sanity) ####
 ############################################
 
-file_name <- "data/CNN_data.h5"
-#file_name <- data/CNN_test_data.h5
-dataset_name <- "fields"
-
-print(h5ls(file_name))
-
-dataset <- h5read(file_name, dataset_name)
-print(dim(dataset))
-
-k <- 1
-replicate_num <- 7
-
-gridList<- list( x= seq( 1,sidelen,length.out= sidelen),
-                 y= seq( 1,sidelen,length.out= sidelen) )
-sGrid<- make.surface.grid(gridList)
-
-image.plot( as.surface( sGrid, dataset[,replicate_num,k]) , col = turbo(256), 
-            main = "Sample Field", 
-            xlab = paste("Kappa2:", round(dataset[1, n_replicates+1, k], 4), 
-                         "Theta:", round(dataset[2, n_replicates+1, k], 3), 
-                         "Rho:", round(dataset[3, n_replicates+1, k], 3))
-            )
-
-
+# file_name <- here("data", "CNN_data.h5")
+# #file_name <- here("data", "CNN_sample_data.h5")
+# dataset_name <- "fields"
+# 
+# print(h5ls(file_name))
+# 
+# dataset <- h5read(file_name, dataset_name)
+# print(dim(dataset))
+# 
+# k <- 1
+# replicate_num <- 7
+# 
+# gridList<- list( x= seq( 1,sidelen,length.out= sidelen),
+#                  y= seq( 1,sidelen,length.out= sidelen) )
+# sGrid<- make.surface.grid(gridList)
+# 
+# image.plot( as.surface( sGrid, dataset[,replicate_num,k]) , col = turbo(256),
+#             main = "Sample Field",
+#             xlab = paste("Kappa2:", round(dataset[1, n_replicates+1, k], 4),
+#                          "Theta:", round(dataset[2, n_replicates+1, k], 3),
+#                          "Rho:", round(dataset[3, n_replicates+1, k], 3))
+#             )

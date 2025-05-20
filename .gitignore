@@ -1,20 +1,16 @@
-# files in data folder are too large
-# will later add to gdrive instead
+# data is to be ignored
 data/
+
+# same with results 
+results/
+
+## additional files
+.DS_Store
+.Rhistory
+.RData
+.here
 **/__pycache__/
 tests/_temp/
 .coverage
 .coverage.*
 profile.out
-
-results/model_wghts/
-results/figures/
-results/metrics/
-results/clim_outputs/
-
-## Annoying files
-.DS_Store
-.Rhistory
-
-# tool that counts lines of code
-cloc-2.04.exe
