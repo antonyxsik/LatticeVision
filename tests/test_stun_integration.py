@@ -42,7 +42,7 @@ def test_stun(model_cls: nn.Module, pos_embed_cls: PosEmbed):
 	transform_funcs = [no_transform, polar_transform]
 
 	# load and create dataset
-	dataset_path = "sample_data/STUN_test_data.h5"
+	dataset_path = "data/I2I_sample_data.h5"
 	val_size = 0.4
 	test_size = 0.5
 
@@ -119,6 +119,7 @@ def test_stun(model_cls: nn.Module, pos_embed_cls: PosEmbed):
 		)
 		break
 
+	# initialize small models
 	if model_cls == UNet:
 		config = ModelConfig(
 			embed_dim=16,

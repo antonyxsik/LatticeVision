@@ -25,6 +25,7 @@ dependencies = [
     "h5py>=3.12.1",
     "pysr>=0.19.4",
     "netcdf4>=1.5.8",
+    "gdown>=5.2.0",
 ]
 
 # default groups to install

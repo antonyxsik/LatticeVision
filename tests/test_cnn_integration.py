@@ -24,7 +24,7 @@ def test_cnn():
 	device = torch.device("cpu")
 
 	# load and create dataset
-	dataset_path = "sample_data/CNN_test_data.h5"
+	dataset_path = "data/CNN_sample_data.h5"
 	val_size = 0.4
 	test_size = 0.5
 
@@ -173,8 +173,8 @@ def test_cnn():
 		show=False,
 	)
 
-	# load in the big STUN data for testing
-	dataset_path_i2i = "sample_data/STUN_test_data.h5"
+	# load in the big i2i data for testing
+	dataset_path_i2i = "data/I2I_sample_data.h5"
 	val_size_i2i = 0.4
 	test_size_i2i = 0.5
 

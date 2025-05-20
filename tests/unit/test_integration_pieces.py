@@ -1,9 +1,9 @@
 import torch.nn as nn
 import pytest
 import torch
+import os 
 from torch.utils.data import DataLoader
 from itertools import product
-
 
 # directly import from latticevision library in directory
 # from latticevision.device import set_device
@@ -25,12 +25,34 @@ from latticevision.img2img.base import (
 from latticevision.img2img import TransUNet, UNet, ViT
 
 
+# check for data locally, if not found, download from gdrive
+DATA_DIR = "data"
+DATA_FILE = "I2I_sample_data.h5"
+DATA_PATH = os.path.join(DATA_DIR, DATA_FILE)
+GDRIVE_ID = "1Hz1aRc49sBy0d74iwkfxu_djzwZsEW39"
+GDRIVE_URL = f"https://drive.google.com/uc?id={GDRIVE_ID}"
+
+
+if not os.path.isdir(DATA_DIR):
+    os.makedirs(DATA_DIR, exist_ok=True)
+
+if not os.path.isfile(DATA_PATH):
+    try:
+        import gdown
+    except ImportError:
+        raise ImportError(
+            "Please install gdown (`pip install gdown`) so the test can auto-download the data."
+        )
+    print(f"{DATA_PATH} not found. Downloading from Google Drive...")
+    gdown.download(GDRIVE_URL, DATA_PATH, quiet=False)
+
+
 def test_load_data():
 	# load and create dataset
 	transform_funcs = [no_transform, polar_transform]
 
 	# load and create dataset
-	dataset_path = "sample_data/STUN_test_data.h5"
+	dataset_path = DATA_PATH
 
 	val_size = 0.4
 	test_size = 0.5
