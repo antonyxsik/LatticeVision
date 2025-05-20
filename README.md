@@ -18,7 +18,7 @@ The paper is currently available on [arXiv](https://arxiv.org/abs/2505.09803).
 
 Prior to running this code, one will need to download `Python`, `R` and `RStudio`, clone this repository, and install all necessary dependencies. 
 
-- **R:** The `R` programming language may be downloaded [here](https://cran.r-project.org/bin/windows/base/). We recommend [`RStudio`](https://posit.co/download/rstudio-desktop/) for opening and working with the `R` scripts (training data and synthetic field generation). 
+- **R:** The `R` programming language may be downloaded [here](https://cran.r-project.org/bin/windows/base/). We strongly recommend [`RStudio`](https://posit.co/download/rstudio-desktop/) for opening and working with the `R` scripts (training data and synthetic field generation). 
 
 - **Python:** The `Python` programming language may be downloaded [here](https://www.python.org/downloads/). We use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) as our package manager. 
 
@@ -87,6 +87,7 @@ In order to reproduce our results, one must first generate the data:
 - Both of these scripts train the networks, save their weights in `results/model_wghts/`, evaluate them on synthetic test data (results saved in `results/metrics/`), and then pass the climate model fields through the networks (saved in `results/clim_outputs/`). 
 
 **_Note_**: 
+
 These scripts will train 4 U-Nets, 16 ViTs, 16 STUNs, and 12 CNNs due to different combinations of hyperparameters (n_replicates, positional embeddings, etc.). This may be quite computationally intensive. We highly recommend modifying the lists in the scripts (that determine which hyperparams to loop through) to reflect the networks that you are interested in training and evaluating.  
 
 
