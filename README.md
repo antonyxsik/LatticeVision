@@ -66,7 +66,7 @@ To get started with our code, download our sample data, network weights (for bot
    make help
    ``` 
 
- to print out other available commands. 
+   to print out other available commands. 
 
 ## Reproducing Results
 
