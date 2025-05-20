@@ -1,8 +1,8 @@
 # Stats
-- 38 files
-- 8890 (8.9K) lines
-- 247363 (247K) chars
-- 27279 (27K) `whitespace-split` tokens
+- 37 files
+- 8558 (8.6K) lines
+- 240984 (241K) chars
+- 26797 (27K) `whitespace-split` tokens
 
 # File Tree
 
@@ -42,21 +42,20 @@ LatticeVision
 │   ├── plotting.py                     [  329L    10,082C 1,141T]
 │   └── seed.py                         [   27L       632C    59T]
 ├── notebooks                           
-│   ├── cnn_demo.ipynb                  [  663L 1,043,199C 1,681T]
-│   ├── cnn_trainloop.py                [  339L     8,560C   775T]
-│   ├── exploring_CESM.ipynb            [  925L 1,928,173C 2,720T]
-│   ├── i2i_demo.ipynb                  [  846L 3,780,543C 2,487T]
-│   ├── i2i_trainloop.py                [  292L     7,458C   718T]
-│   └── misc_figures.ipynb              [1,188L 3,732,318C 3,376T]
+│   ├── cesm_application.ipynb          [  926L 1,928,325C 2,792T]
+│   ├── cnn_demo.ipynb                  [  680L 1,043,535C 1,726T]
+│   ├── cnn_trainloop.py                [  339L     8,552C   775T]
+│   ├── i2i_demo.ipynb                  [  951L 1,525,218C 2,972T]
+│   └── i2i_trainloop.py                [  292L     7,450C   718T]
 ├── tests                               
 │   ├── unit                            
-│   │   └── test_integration_pieces.py  [  186L     4,249C   406T]
-│   ├── test_cnn_integration.py         [  257L     5,883C   535T]
-│   └── test_stun_integration.py        [  242L     5,384C   479T]
-├── README.md                           [   68L     3,622C   481T]
+│   │   └── test_integration_pieces.py  [  208L     4,862C   471T]
+│   ├── test_cnn_integration.py         [  294L     7,030C   667T]
+│   └── test_i2i_integration.py         [  264L     6,030C   546T]
+├── README.md                           [  113L     5,937C   764T]
 ├── makefile                            [1,633L    50,043C 5,988T]
-├── pyproject.toml                      [  112L     2,693C   308T]
-├── requirements.txt                    [  668L    13,670C 1,475T]
+├── pyproject.toml                      [  113L     2,714C   309T]
+├── requirements.txt                    [  677L    13,805C 1,492T]
 ```
 
 # File Contents
@@ -5081,6 +5080,285 @@ def set_all_random_seeds(seed: int, cudnn_deterministic: bool = False):
 
 ``````{ end_of_file="latticevision/seed.py" }
 
+``````{ path="notebooks/cesm_application.ipynb" processed_with="ipynb_to_md" }
+## Application to CESM LENS Fields
+
+In this notebook we pass the CESM LENS Temperature Sensitivity Anomalies Data through both an I2I model and a CNN model of choice. 
+
+```python
+import torch
+import matplotlib.pyplot as plt
+import numpy as np
+import h5py
+
+from latticevision.device import set_device
+from latticevision.img2img import TransUNet, UNet, ViT
+from latticevision.img2img.base import (
+	ModelConfig,
+	NullPosEmbed,
+	LearnedPosEmbed,
+	SinusoidalPosEmbed,
+	RotaryPosEmbed,
+)
+
+from latticevision.cnn.model import ModelConfig as CNNModelConfig
+from latticevision.cnn.model import CNN
+from latticevision.cnn.eval import fast_cnn_field_tiler
+from latticevision.seed import set_all_random_seeds
+```
+
+```python
+# fix random seed for reproducibility
+set_all_random_seeds(777)
+
+device = set_device(machine="remote", gpu_id="cuda:0", verbose=True)  # for remote use
+# device = set_device(machine="local", gpu = False, verbose=True)  # for local use
+```
+
+Here we pull in the climate fields. 
+
+```python
+file_path = "../data/CESM_LENS_fields.h5"
+with h5py.File(file_path, "r") as f:
+	print("Components in the file:", list(f.keys()))
+
+	# extract components
+	clim_fields = f["clim_fields"][:]
+	clim_fields_norm = f["clim_fields_norm"][:]
+
+	print("clim_fields shape:", clim_fields.shape)
+```
+
+```python
+# center in the pacific and add batch dimension
+clim_fields_norm = np.roll(clim_fields_norm, shift=144, axis=-1)
+clim_fields_norm = torch.tensor(clim_fields_norm).unsqueeze(0).float().to(device)
+clim_fields_norm.shape
+```
+
+Pulling in our I2I model of choice: 
+
+```python
+modeltype = "TransUNet"  # can also be "UNet, "ViT"
+modelpath = "../results/model_wghts/modelTransUNet_reps30_posRotaryPosEmbed.pth"
+n_reps = 30
+pos_embeds = [NullPosEmbed, LearnedPosEmbed, SinusoidalPosEmbed, RotaryPosEmbed]
+
+if modeltype == "UNet":
+	config = ModelConfig(
+		in_channels=n_reps,
+	)
+	model = UNet(config)
+	model.load_state_dict(torch.load(modelpath))
+
+elif modeltype == "TransUNet":
+	config = ModelConfig(
+		in_channels=n_reps,
+		patch_size_h=2,
+		patch_size_w=2,
+		pos_embed_cls=pos_embeds[3],
+	)
+	model = TransUNet(config)
+	model.load_state_dict(torch.load(modelpath))
+elif modeltype == "ViT":
+	config = ModelConfig(
+		in_channels=n_reps,
+		patch_size_h=16,
+		patch_size_w=16,
+		pos_embed_cls=pos_embeds[3],
+	)
+	model = ViT(config)
+	model.load_state_dict(torch.load(modelpath))
+else:
+	raise ValueError("modeltype must be one of 'UNet', 'TransUNet', or 'ViT'")
+
+model = model.to(device)
+model.eval()
+```
+
+We then pass the climate fields through the model and visualize the resulting parameters:
+
+```python
+# Passing the climate fields through the model
+output = model(clim_fields_norm[:, :n_reps, :, :])
+print(output.shape)
+
+kappa2 = np.flip(output[0, 0, :, :].detach().cpu().numpy(), axis=0)
+theta = np.pi / 2 - np.flip(output[0, 1, :, :].detach().cpu().numpy(), axis=0)
+rho = np.flip(output[0, 2, :, :].detach().cpu().numpy(), axis=0)
+clim_field = np.flip(clim_fields_norm[0, 0, :, :].detach().cpu().numpy(), axis=0)
+awght = np.exp(kappa2) + 4
+print(
+	np.min(awght), np.max(awght), np.min(theta), np.max(theta), np.min(rho), np.max(rho)
+)
+```
+
+```python
+# plot the first original clim field and the outputs (3 channels)
+fig, ax = plt.subplots(2, 2, figsize=(13, 8))
+
+ax[0, 0].imshow(clim_field, cmap="turbo")
+ax[0, 0].set_title("First clim field")
+fig.colorbar(ax[0, 0].imshow(clim_field, cmap="turbo"), ax=ax[0, 0], shrink=0.9)
+
+ax[0, 1].imshow(kappa2, cmap="turbo")
+ax[0, 1].set_title("awght")
+fig.colorbar(ax[0, 1].imshow(awght, cmap="viridis"), ax=ax[0, 1], shrink=0.9)
+
+ax[1, 0].imshow(theta, cmap="viridis")
+ax[1, 0].set_title(r"$\theta$")
+fig.colorbar(ax[1, 0].imshow(theta, cmap="viridis"), ax=ax[1, 0], shrink=0.9)
+
+ax[1, 1].imshow(rho, cmap="viridis")
+ax[1, 1].set_title(r"$\rho_x$")
+fig.colorbar(ax[1, 1].imshow(rho, cmap="viridis"), ax=ax[1, 1], shrink=0.9)
+plt.tight_layout()
+plt.show()
+```
+
+One can then uncomment the lines below to save the model outputs (parameters):
+
+```python
+# final = output.detach().cpu().numpy()
+# # remove first dim from final
+# final = np.squeeze(final)
+# final.shape
+```
+
+```python
+# with h5py.File('../sample_data/STUN30rep_clim_output_example.h5', 'w') as f:
+#     f.create_dataset('clim_output', data=final)
+```
+
+## Local CNN
+
+We repeat all of the steps above with only minor differences to accomodate the moving window estimation approach with a CNN. 
+
+```python
+config = CNNModelConfig(
+	sidelen=25,
+	in_channels=30,
+	out_params=3,
+	conv_channels=(64, 128, 256),
+	linear_sizes=(500, 64),
+	kernel_sizes=(10, 7, 5),
+	padding=0,
+)
+
+# config = CNNModelConfig(
+#     sidelen=17,
+# 	in_channels=30,
+# 	out_params=3,
+# 	conv_channels=(64, 128, 256),
+# 	linear_sizes=(500,64),
+#     kernel_sizes = (6,4,4),
+#     padding = 0,
+# )
+
+# config = CNNModelConfig(
+#     sidelen=9,
+# 	in_channels=1,
+# 	out_params=3,
+# 	conv_channels=(64, 128, 256),
+# 	linear_sizes=(500,64),
+#     kernel_sizes = (2,2,2),
+#     padding = 0,
+# )
+
+model = CNN(config)
+state_dict = torch.load(
+	"../results/model_wghts/modelCNN_size25_reps30.pth",
+	map_location=torch.device(device),
+)
+model.load_state_dict(state_dict)
+model.to(device)
+```
+
+```python
+cnn_outputs = torch.zeros(output.size())
+cnn_outputs.shape
+```
+
+```python
+clim_fields_norm = clim_fields_norm[:, :n_reps, :, :]
+```
+
+```python
+for i in range(len(cnn_outputs)):
+	print(clim_fields_norm[i].unsqueeze(0).shape)
+```
+
+```python
+for i in range(len(cnn_outputs)):
+	cnn_output = fast_cnn_field_tiler(
+		model=model,
+		fields=clim_fields_norm[i].unsqueeze(0),
+		device=device,
+		patch_batch_size=10000,
+		verbose=False,
+		padding_mode="reflect",
+		patch_size=25,
+	)
+	cnn_outputs[i] = cnn_output
+
+cnn_outputs.shape
+```
+
+```python
+kappa2_cnn = np.flip(cnn_outputs[0, 0, :, :].detach().cpu().numpy(), axis=0)
+theta_cnn = np.pi / 2 - np.flip(cnn_outputs[0, 1, :, :].detach().cpu().numpy(), axis=0)
+rho_cnn = np.flip(cnn_outputs[0, 2, :, :].detach().cpu().numpy(), axis=0)
+awght_cnn = np.exp(kappa2_cnn) + 4
+print(
+	np.min(awght_cnn),
+	np.max(awght_cnn),
+	np.min(theta_cnn),
+	np.max(theta_cnn),
+	np.min(rho_cnn),
+	np.max(rho_cnn),
+)
+```
+
+```python
+# plot the first original clim field and the outputs (3 channels)
+fig, ax = plt.subplots(2, 2, figsize=(13, 8))
+
+ax[0, 0].imshow(clim_field, cmap="turbo")
+ax[0, 0].set_title("First clim field")
+fig.colorbar(ax[0, 0].imshow(clim_field, cmap="turbo"), ax=ax[0, 0], shrink=0.9)
+
+ax[0, 1].imshow(kappa2_cnn, cmap="turbo")
+ax[0, 1].set_title("awght")
+fig.colorbar(ax[0, 1].imshow(awght_cnn, cmap="viridis"), ax=ax[0, 1], shrink=0.9)
+
+ax[1, 0].imshow(theta_cnn, cmap="viridis")
+ax[1, 0].set_title(r"$\theta$")
+fig.colorbar(ax[1, 0].imshow(theta_cnn, cmap="viridis"), ax=ax[1, 0], shrink=0.9)
+
+ax[1, 1].imshow(rho_cnn, cmap="viridis")
+ax[1, 1].set_title(r"$\rho$")
+fig.colorbar(ax[1, 1].imshow(rho_cnn, cmap="viridis"), ax=ax[1, 1], shrink=0.9)
+plt.tight_layout()
+plt.show()
+```
+
+Once again, saving is done below. 
+
+```python
+# final_cnn = cnn_outputs.detach().cpu().numpy()
+# # remove first dim from final
+# final_cnn = np.squeeze(final_cnn)
+# final_cnn.shape
+```
+
+```python
+# with h5py.File('../sample_data/CNN25_clim_output_example.h5', 'w') as f:
+#     f.create_dataset('clim_output', data=final_cnn)
+```
+
+
+``````{ end_of_file="notebooks/cesm_application.ipynb" }
+
 ``````{ path="notebooks/cnn_demo.ipynb" processed_with="ipynb_to_md" }
 ## CNN Demo Notebook
 
@@ -5157,6 +5435,8 @@ plot_example_field(
 	field_color="turbo",
 )
 ```
+
+## Training
 
 ```python
 # n_batch = 64
@@ -5256,6 +5536,10 @@ val_losses = training_results["val_losses"]
 plot_losses(train_losses=train_losses, val_losses=val_losses)
 ```
 
+## Evaluation
+
+Here we load in existing weights, but you can comment those lines out to simply use the model you just trained. 
+
 ```python
 config = ModelConfig(
 	sidelen=25,
@@ -5289,7 +5573,8 @@ config = ModelConfig(
 
 model = CNN(config)
 state_dict = torch.load(
-	"../results/model_wghts/modelCNN_size25_reps30.pth", map_location=torch.device(device)
+	"../results/model_wghts/modelCNN_size25_reps30.pth",
+	map_location=torch.device(device),
 )
 model.load_state_dict(state_dict)
 model.to(device)
@@ -5318,7 +5603,7 @@ dataset_path_i2i = "../data/I2I_sample_data.h5"
 val_size_i2i = 0.4
 test_size_i2i = 0.5
 
-# dataset_path_i2i = "../data/STUN_data.h5"
+# dataset_path_i2i = "../data/I2I_data.h5"
 # val_size_i2i = 0.1
 # test_size_i2i = 0.2
 
@@ -5410,7 +5695,7 @@ metrics = eval_img2img_model(
 
 ```python
 # inds = [0, 9, 16, 32, 37]
-inds = [0] # for test dataset
+inds = [0]  # for test dataset
 
 plot_img2img_samples(
 	model=model,
@@ -5471,7 +5756,7 @@ num_replicates_list = [1, 5, 15, 30]
 
 # load big i2i data first, depends on num replicates
 for num_replicates in num_replicates_list:
-	dataset_path_i2i = "data/STUN_data.h5"
+	dataset_path_i2i = "data/I2I_data.h5"
 	val_size_i2i = 0.1
 	test_size_i2i = 0.2
 
@@ -5702,7 +5987,7 @@ for num_replicates in num_replicates_list:
 		)
 
 		# now we feed in clim fields
-		file_path = "sample_data/CESM_LENS_fields.h5"
+		file_path = "data/CESM_LENS_fields.h5"
 		with h5py.File(file_path, "r") as f:
 			print("Components in the file:", list(f.keys()))
 
@@ -5773,279 +6058,8 @@ for num_replicates in num_replicates_list:
 
 ``````{ end_of_file="notebooks/cnn_trainloop.py" }
 
-``````{ path="notebooks/exploring_CESM.ipynb" processed_with="ipynb_to_md" }
-## Exploration of CESM LENS Temp Data
-
-In this notebook we pass the CESM LENS Temp Data through both an I2I model and a CNN model of choice. 
-
-```python
-import torch
-import matplotlib.pyplot as plt
-import numpy as np
-import h5py
-
-from latticevision.device import set_device
-from latticevision.img2img import TransUNet, UNet, ViT
-from latticevision.img2img.base import (
-	ModelConfig,
-	NullPosEmbed,
-	LearnedPosEmbed,
-	SinusoidalPosEmbed,
-	RotaryPosEmbed,
-)
-
-from latticevision.cnn.model import ModelConfig as CNNModelConfig
-from latticevision.cnn.model import CNN
-from latticevision.cnn.eval import fast_cnn_field_tiler
-from latticevision.seed import set_all_random_seeds
-```
-
-```python
-# fix random seed for reproducibility
-set_all_random_seeds(777)
-
-device = set_device(machine="remote", gpu_id="cuda:0", verbose=True)  # for remote use
-# device = set_device(machine="local", gpu = False, verbose=True)  # for local use
-```
-
-```python
-file_path = "../sample_data/CESM_LENS_fields.h5"
-with h5py.File(file_path, "r") as f:
-	print("Components in the file:", list(f.keys()))
-
-	# extract components
-	clim_fields = f["clim_fields"][:]
-	clim_fields_norm = f["clim_fields_norm"][:]
-
-	print("clim_fields shape:", clim_fields.shape)
-```
-
-```python
-clim_fields_norm = np.roll(clim_fields_norm, shift=144, axis=-1)
-```
-
-```python
-# add batch dimension to clim fields
-clim_fields_norm = torch.tensor(clim_fields_norm).unsqueeze(0).float().to(device)
-clim_fields_norm.shape
-```
-
-```python
-modeltype = "TransUNet"  # can also be "UNet, "ViT"
-# modelpath = "../results/model_wghts/unet_wghts_30rep_norm_shuffle.pth"
-modelpath = "../results/model_wghts/modelTransUNet_reps30_posRotaryPosEmbed.pth"
-n_reps = 30
-pos_embeds = [NullPosEmbed, LearnedPosEmbed, SinusoidalPosEmbed, RotaryPosEmbed]
-
-if modeltype == "UNet":
-	config = ModelConfig(
-		in_channels=n_reps,
-	)
-	model = UNet(config)
-	model.load_state_dict(torch.load(modelpath))
-
-elif modeltype == "TransUNet":
-	config = ModelConfig(
-		in_channels=n_reps,
-		patch_size_h=2,
-		patch_size_w=2,
-		pos_embed_cls=pos_embeds[3],
-	)
-	model = TransUNet(config)
-	model.load_state_dict(torch.load(modelpath))
-elif modeltype == "ViT":
-	config = ModelConfig(
-		in_channels=n_reps,
-		patch_size_h=16,
-		patch_size_w=16,
-		pos_embed_cls=pos_embeds[3],
-	)
-	model = ViT(config)
-	model.load_state_dict(torch.load(modelpath))
-else:
-	raise ValueError("modeltype must be one of 'UNet', 'TransUNet', or 'ViT'")
-
-model = model.to(device)
-model.eval()
-```
-
-```python
-output = model(clim_fields_norm[:, :n_reps, :, :])
-print(output.shape)
-kappa2 = np.flip(output[0, 0, :, :].detach().cpu().numpy(), axis=0)
-theta = np.pi / 2 - np.flip(output[0, 1, :, :].detach().cpu().numpy(), axis=0)
-rho = np.flip(output[0, 2, :, :].detach().cpu().numpy(), axis=0)
-clim_field = np.flip(clim_fields_norm[0, 0, :, :].detach().cpu().numpy(), axis=0)
-
-awght = np.exp(kappa2) + 4
-np.min(awght), np.max(awght), np.min(theta), np.max(theta), np.min(rho), np.max(rho)
-```
-
-```python
-# plot the first original clim field and the outputs (3 channels)
-fig, ax = plt.subplots(2, 2, figsize=(13, 8))
-
-ax[0, 0].imshow(clim_field, cmap="turbo")
-ax[0, 0].set_title("First clim field")
-fig.colorbar(ax[0, 0].imshow(clim_field, cmap="turbo"), ax=ax[0, 0], shrink=0.9)
-
-ax[0, 1].imshow(kappa2, cmap="turbo")
-ax[0, 1].set_title("awght")
-fig.colorbar(ax[0, 1].imshow(awght, cmap="viridis"), ax=ax[0, 1], shrink=0.9)
-
-ax[1, 0].imshow(theta, cmap="viridis")
-ax[1, 0].set_title(r"$\theta$")
-fig.colorbar(ax[1, 0].imshow(theta, cmap="viridis"), ax=ax[1, 0], shrink=0.9)
-
-ax[1, 1].imshow(rho, cmap="viridis")
-ax[1, 1].set_title(r"$\rho_x$")
-fig.colorbar(ax[1, 1].imshow(rho, cmap="viridis"), ax=ax[1, 1], shrink=0.9)
-plt.tight_layout()
-plt.show()
-```
-
-```python
-# final = output.detach().cpu().numpy()
-# # remove first dim from final
-# final = np.squeeze(final)
-# final.shape
-```
-
-```python
-# with h5py.File('../sample_data/STUN30rep_clim_output.h5', 'w') as f:
-#     f.create_dataset('clim_output', data=final)
-```
-
-### Local CNN
-
-```python
-config = CNNModelConfig(
-	sidelen=25,
-	in_channels=30,
-	out_params=3,
-	conv_channels=(64, 128, 256),
-	linear_sizes=(500, 64),
-	kernel_sizes=(10, 7, 5),
-	padding=0,
-)
-
-# config = CNNModelConfig(
-#     sidelen=17,
-# 	in_channels=30,
-# 	out_params=3,
-# 	conv_channels=(64, 128, 256),
-# 	linear_sizes=(500,64),
-#     kernel_sizes = (6,4,4),
-#     padding = 0,
-# )
-
-# config = CNNModelConfig(
-#     sidelen=9,
-# 	in_channels=1,
-# 	out_params=3,
-# 	conv_channels=(64, 128, 256),
-# 	linear_sizes=(500,64),
-#     kernel_sizes = (2,2,2),
-#     padding = 0,
-# )
-
-model = CNN(config)
-state_dict = torch.load(
-	"../results/model_wghts/modelCNN_size25_reps30.pth",
-	map_location=torch.device(device),
-)
-model.load_state_dict(state_dict)
-model.to(device)
-```
-
-```python
-cnn_outputs = torch.zeros(output.size())
-cnn_outputs.shape
-```
-
-```python
-clim_fields_norm = clim_fields_norm[:, :n_reps, :, :]
-```
-
-```python
-for i in range(len(cnn_outputs)):
-	print(clim_fields_norm[i].unsqueeze(0).shape)
-```
-
-```python
-for i in range(len(cnn_outputs)):
-	cnn_output = fast_cnn_field_tiler(
-		model=model,
-		fields=clim_fields_norm[i].unsqueeze(0),
-		device=device,
-		patch_batch_size=10000,
-		verbose=False,
-		padding_mode="reflect",
-		patch_size=25,
-	)
-	cnn_outputs[i] = cnn_output
-
-cnn_outputs.shape
-```
-
-```python
-kappa2_cnn = np.flip(cnn_outputs[0, 0, :, :].detach().cpu().numpy(), axis=0)
-theta_cnn = np.pi / 2 - np.flip(cnn_outputs[0, 1, :, :].detach().cpu().numpy(), axis=0)
-rho_cnn = np.flip(cnn_outputs[0, 2, :, :].detach().cpu().numpy(), axis=0)
-```
-
-```python
-awght_cnn = np.exp(kappa2_cnn) + 4
-(
-	np.min(awght_cnn),
-	np.max(awght_cnn),
-	np.min(theta_cnn),
-	np.max(theta_cnn),
-	np.min(rho_cnn),
-	np.max(rho_cnn),
-)
-```
-
-```python
-# plot the first original clim field and the outputs (3 channels)
-fig, ax = plt.subplots(2, 2, figsize=(13, 8))
-
-ax[0, 0].imshow(clim_field, cmap="turbo")
-ax[0, 0].set_title("First clim field")
-fig.colorbar(ax[0, 0].imshow(clim_field, cmap="turbo"), ax=ax[0, 0], shrink=0.9)
-
-ax[0, 1].imshow(kappa2_cnn, cmap="turbo")
-ax[0, 1].set_title("awght")
-fig.colorbar(ax[0, 1].imshow(awght_cnn, cmap="viridis"), ax=ax[0, 1], shrink=0.9)
-
-ax[1, 0].imshow(theta_cnn, cmap="viridis")
-ax[1, 0].set_title(r"$\theta$")
-fig.colorbar(ax[1, 0].imshow(theta_cnn, cmap="viridis"), ax=ax[1, 0], shrink=0.9)
-
-ax[1, 1].imshow(rho_cnn, cmap="viridis")
-ax[1, 1].set_title(r"$\rho$")
-fig.colorbar(ax[1, 1].imshow(rho_cnn, cmap="viridis"), ax=ax[1, 1], shrink=0.9)
-plt.tight_layout()
-plt.show()
-```
-
-```python
-# final_cnn = cnn_outputs.detach().cpu().numpy()
-# # remove first dim from final
-# final_cnn = np.squeeze(final_cnn)
-# final_cnn.shape
-```
-
-```python
-# with h5py.File('../sample_data/CNN25_clim_output.h5', 'w') as f:
-#     f.create_dataset('clim_output', data=final_cnn)
-```
-
-
-``````{ end_of_file="notebooks/exploring_CESM.ipynb" }
-
 ``````{ path="notebooks/i2i_demo.ipynb" processed_with="ipynb_to_md" }
-## Image-to-image (I2I) Model Demo Notebook
+## Image-to-Image (I2I) Network Demo Notebook
 
 In this notebook we show how STUN, UNet, and ViT are trained and evaluated on non-stationary, spatial data. This notebook is intended to be a tutorial/demonstration. 
 
@@ -6094,13 +6108,13 @@ The `make_dataset` function from `dataset.py` returns the extracted fields, awgh
 
 ```python
 # for testing
-# dataset_path = "../sample_data/STUN_test_data.h5"
-# val_size = 0.4
-# test_size = 0.5
+dataset_path = "../data/I2I_sample_data.h5"
+val_size = 0.4
+test_size = 0.5
 
-dataset_path = "../data/STUN_data.h5"
-val_size = 0.1
-test_size = 0.2
+# dataset_path = "../data/I2I_data.h5"
+# val_size = 0.1
+# test_size = 0.2
 
 transform_funcs = [no_transform, polar_transform]
 
@@ -6143,11 +6157,13 @@ plot_example_field(
 )
 ```
 
+## Training
+
 We now use the `DataLoader` class from PyTorch to conveniently batch the data. 
 
 ```python
-n_batch = 64
-# n_batch = 2
+# n_batch = 64
+n_batch = 2
 
 train_loader = DataLoader(train_df, batch_size=n_batch, shuffle=True)
 val_loader = DataLoader(val_df, batch_size=n_batch, shuffle=False)
@@ -6187,7 +6203,7 @@ for fields, params in test_loader:
 Now let's pull in our `TransUNet (STUN)`, `UNet`, or `ViT` from `stun.py`, `unet.py`, and `vit.py` respectively. We access all of these through the `__init__.py` file in the `img2img` folder.  
 
 ```python
-modeltype = "UNet"  # can also be "TransUNet, "ViT"
+modeltype = "TransUNet"  # can also be "TransUNet, "ViT"
 
 pos_embeds = [NullPosEmbed, LearnedPosEmbed, SinusoidalPosEmbed, RotaryPosEmbed]
 
@@ -6237,7 +6253,7 @@ train_config = TrainingConfig(
 	augmentation=True,
 	save=False,  # switch to True to save model after training, currently this is just training for show
 	save_directory="results/model_wghts/",
-	savename="stun_wghts.pth",
+	savename="stun_wghts_example.pth",
 	verbose=True,
 	normalize=True,
 	shuffle=True,
@@ -6268,12 +6284,13 @@ plot_losses(
 
 The `train_model` function saves the model in `results/model_wghts/` if `save = True`. 
 
-If we want to load it back up again, **we run everything in the notebook except the two cells in which the training loop and plotting code are executed**. Then we continue on through the notebook, beginning with loading the model by using the code below: 
+## Evaluation
+
+If we want to load it back up again, **we run everything in the notebook except the two cells in which the training loop and loss plotting code are executed**. Then we continue on through the notebook, beginning with loading the model by using the code below: 
 
 ```python
-modeltype = "ViT"  # can also be "UNet, "ViT"
-# modelpath = "../results/model_wghts/unet_wghts_30rep_norm_shuffle.pth"
-modelpath = "../results/model_wghts/modelViT_reps30_posRotaryPosEmbed.pth"
+modeltype = "TransUNet"  # can also be "UNet, "ViT"
+modelpath = "../results/model_wghts/modelTransUNet_reps30_posRotaryPosEmbed.pth"
 n_reps = 30
 pos_embeds = [NullPosEmbed, LearnedPosEmbed, SinusoidalPosEmbed, RotaryPosEmbed]
 
@@ -6328,8 +6345,8 @@ metrics = eval_model(
 Here we take a couple fields inside of the test data and plot how the model does using `plot_img2img_samples` from `plotting.py`.
 
 ```python
-inds = [0, 9, 16, 32, 37]
-# inds = [0] # for test dataset
+# inds = [0, 9, 16, 32, 37]
+inds = [0]  # for test dataset
 
 plot_img2img_samples(
 	model=model,
@@ -6400,7 +6417,7 @@ pos_embeddings_all = [NullPosEmbed, LearnedPosEmbed, SinusoidalPosEmbed, RotaryP
 
 for num_replicates in num_replicates_list:
 	# create dataset and dataloaders
-	dataset_path = "data/STUN_data.h5"
+	dataset_path = "data/I2I_data.h5"
 	val_size = 0.1
 	test_size = 0.2
 
@@ -6584,7 +6601,7 @@ for num_replicates in num_replicates_list:
 				index=False,
 			)
 
-			file_path = "sample_data/CESM_LENS_fields.h5"
+			file_path = "data/CESM_LENS_fields.h5"
 			with h5py.File(file_path, "r") as f:
 				print("Components in the file:", list(f.keys()))
 
@@ -6643,499 +6660,13 @@ for num_replicates in num_replicates_list:
 
 ``````{ end_of_file="notebooks/i2i_trainloop.py" }
 
-``````{ path="notebooks/misc_figures.ipynb" processed_with="ipynb_to_md" }
-### Misc Figures and Experiments
-
-```python
-import matplotlib.pyplot as plt
-import numpy as np
-import torch
-from torch.utils.data import DataLoader
-from torch.utils.data import Dataset
-
-
-from typing import Optional
-import time
-
-# directly import from latticevision library in directory
-from latticevision.device import set_device
-from latticevision.img2img.dataset import (
-	make_dataset,
-	DataConfig,
-	no_transform,
-	polar_transform,
-)
-from latticevision.plotting import plot_img2img_samples
-from latticevision.img2img import TransUNet, UNet, ViT
-from latticevision.img2img.base import (
-	ModelConfig,
-	NullPosEmbed,
-	LearnedPosEmbed,
-	SinusoidalPosEmbed,
-	RotaryPosEmbed,
-)
-from latticevision.seed import set_all_random_seeds
-
-from latticevision.cnn.model import ModelConfig as CNNModelConfig
-from latticevision.cnn.model import CNN
-from latticevision.cnn.eval import fast_cnn_field_tiler
-
-# set random seed for reproducibility
-set_all_random_seeds(777)
-
-# for remote use
-device = set_device(machine="remote", gpu=True, gpu_id="cuda:0", verbose=True)
-
-# for local use
-# device = set_device(machine="local", gpu=True, verbose=True)
-```
-
-```python
-# for testing
-# dataset_path = "../sample_data/STUN_test_data.h5"
-# val_size = 0.4
-# test_size = 0.5
-
-dataset_path = "../data/STUN_data.h5"
-val_size = 0.1
-test_size = 0.2
-
-transform_funcs = [no_transform, polar_transform]
-
-data_config = DataConfig(
-	file_path=dataset_path,
-	n_rows=192,
-	n_cols=288,
-	n_replicates=30,
-	n_params=3,
-	transform_function=transform_funcs[0],
-	log_kappa2=True,
-	shift_theta=True,
-	val_size=val_size,
-	test_size=test_size,
-	random_state=777,
-	verbose=True,
-)
-
-data_dict = make_dataset(
-	config=data_config,
-)
-
-train_df = data_dict["train_df"]
-val_df = data_dict["val_df"]
-test_df = data_dict["test_df"]
-```
-
-```python
-def plot_example_field_paper(
-	dataset,
-	config,
-	idx: int,
-	model_type: str = "STUN",
-	field_color: str = "turbo",
-	param1_color: str = "viridis",
-	param2_color: str = "viridis",
-	param3_color: str = "viridis",
-	show: bool = True,
-) -> None:
-	if model_type == "CNN":
-		# extract field and params
-		field, params = dataset[idx]
-		# separate params for plotting
-		kappa2 = params[0]
-		theta = params[1]
-		rho = params[2]
-
-		fig, ax = plt.subplots(figsize=(6, 5))
-		im = ax.imshow(field[0], cmap=field_color)
-		fig.colorbar(im, ax=ax, orientation="vertical")
-
-		ax.set_title(f"Field #{idx + 1}, Replicate #1")
-		ax.set_xlabel(
-			rf"$\kappa^2$ = {kappa2:.4f}, $\theta$ = {theta:.2f}, $\rho$ = {rho:.2f}"
-		)
-		ax.invert_yaxis()
-
-	elif model_type == "STUN":
-		# extract field and params
-		field = dataset[idx][0][0]
-		params = dataset[idx][1]
-		# kappa2 transformed back to original scale
-		kappa2 = torch.exp(params[0])
-		theta = params[1]
-		rho = params[2]
-
-		fig, axs = plt.subplots(2, 2, figsize=(10, 7))
-		axis_shrink = 0.6
-		# spatial field plot
-		im1 = axs[0, 0].imshow(field, cmap=field_color)
-		axs[0, 0].set_title(r"Spatial Field")
-		fig.colorbar(im1, ax=axs[0, 0], orientation="vertical", shrink=axis_shrink)
-		axs[0, 0].invert_yaxis()
-
-		# kappa2 plot
-		im2 = axs[0, 1].imshow(kappa2, cmap=param1_color)
-		axs[0, 1].set_title(r"$\kappa^2(\mathbf{s})$")
-		fig.colorbar(im2, ax=axs[0, 1], orientation="vertical", shrink=axis_shrink)
-		axs[0, 1].invert_yaxis()
-
-		# theta plot
-		im3 = axs[1, 0].imshow(theta, cmap=param2_color)
-		if config.transform_function == no_transform:
-			axs[1, 0].set_title(r"$\theta(\mathbf{s})$")
-		elif config.transform_function == polar_transform:
-			axs[1, 0].set_title(r"$f_1$ (Polar) Field")
-		fig.colorbar(im3, ax=axs[1, 0], orientation="vertical", shrink=axis_shrink)
-		axs[1, 0].invert_yaxis()
-
-		# rho_x plot
-		im4 = axs[1, 1].imshow(rho, cmap=param3_color)
-		if config.transform_function == no_transform:
-			axs[1, 1].set_title(r"$\rho(\mathbf{s})$")
-		elif config.transform_function == polar_transform:
-			axs[1, 1].set_title(r"$f_2$ (Polar) Field")
-		fig.colorbar(im4, ax=axs[1, 1], orientation="vertical", shrink=axis_shrink)
-		axs[1, 1].invert_yaxis()
-
-	else:
-		print(
-			"Invalid model type. Unable to plot field. Please use either STUN or CNN."
-		)
-		return
-
-	# option set for testing
-	if show:
-		plt.tight_layout()
-		plt.show()
-	else:
-		plt.close(fig)
-```
-
-### Appendix Training Data Figure
-
-```python
-plot_example_field_paper(
-	dataset=train_df,
-	config=data_config,
-	idx=66,
-	model_type="STUN",
-	field_color="turbo",
-	param1_color="viridis",
-	param2_color="viridis",
-	param3_color="viridis",
-)
-```
-
-```python
-cnn_config = CNNModelConfig(
-	sidelen=25,
-	in_channels=30,
-	out_params=3,
-	conv_channels=(64, 128, 256),
-	linear_sizes=(500, 64),
-	kernel_sizes=(10, 7, 5),
-	padding=0,
-)
-
-cnn_model = CNN(cnn_config).to(device)
-
-state_dict = torch.load(
-	"../results/model_wghts/modelCNN_size25_reps30.pth",
-	map_location=torch.device(device),
-)
-cnn_model.load_state_dict(state_dict)
-cnn_model.to(device)
-
-total_params = sum(p.numel() for p in cnn_model.parameters() if p.requires_grad)
-print(f"Total number of trainable parameters: {total_params}")
-cnn_model.eval()
-```
-
-```python
-test_fields = test_df[:][0]
-test_params = test_df[:][1]
-
-print("Test fields shape: ", test_fields.shape)
-print("Test params shape: ", test_params.shape)
-
-cnn_outputs = torch.zeros(test_params.size())
-```
-
-```python
-for i in range(len(cnn_outputs)):
-	cnn_output = fast_cnn_field_tiler(
-		model=cnn_model,
-		fields=test_fields[i].unsqueeze(0),
-		device=device,
-		patch_batch_size=10000,
-		verbose=False,
-		padding_mode="reflect",
-		patch_size=25,
-	)
-	cnn_outputs[i] = cnn_output
-
-cnn_outputs.shape
-```
-
-```python
-pos_embeds = [NullPosEmbed, LearnedPosEmbed, SinusoidalPosEmbed, RotaryPosEmbed]
-
-stun_config = ModelConfig(
-	patch_size_h=2,
-	patch_size_w=2,
-	pos_embed_cls=pos_embeds[3],
-)
-stun_model = TransUNet(stun_config)
-
-modelpath = "../results/model_wghts/modelTransUNet_reps30_posRotaryPosEmbed.pth"
-stun_model.load_state_dict(torch.load(modelpath))
-
-# send model to device and count params
-stun_model = stun_model.to(device)
-total_params = sum(p.numel() for p in stun_model.parameters() if p.requires_grad)
-print(f"Total number of trainable parameters: {total_params}")
-stun_model.eval()
-```
-
-#### Timing the I2I model outputs
-
-```python
-# clear cuda cache
-test_loader = DataLoader(test_df, batch_size=64, shuffle=False)
-stun_outputs = torch.zeros(test_params.size())
-
-starttime = time.time()
-with torch.no_grad():
-	for batch in test_loader:
-		break
-
-	batch = [b.to(device) for b in batch]
-	fields, params = batch
-	stun_output = stun_model(fields)
-	stun_output = stun_output.cpu()
-	stun_outputs[: len(stun_output)] = stun_output
-	print("STUN output shape: ", stun_output.shape)
-
-print("Time taken: ", time.time() - starttime)
-stun_outputs.shape
-```
-
-```python
-unet_config = ModelConfig()
-unet_model = UNet(unet_config)
-unet_model.to(device)
-total_params = sum(p.numel() for p in unet_model.parameters() if p.requires_grad)
-print(f"Total number of trainable parameters: {total_params}")
-unet_model.eval()
-
-unet_outputs = torch.zeros(test_params.size())
-```
-
-```python
-starttime = time.time()
-with torch.no_grad():
-	# get the first batch of data
-	for batch in test_loader:
-		break
-	batch = [b.to(device) for b in batch]
-	fields, params = batch
-	unet_output = unet_model(fields)
-	unet_output = unet_output.cpu()
-	unet_outputs[: len(unet_output)] = unet_output
-	print("unet output shape: ", unet_output.shape)
-
-print("Time taken: ", time.time() - starttime)
-```
-
-```python
-vit_config = ModelConfig(
-	patch_size_h=16,
-	patch_size_w=16,
-	pos_embed_cls=pos_embeds[3],
-)
-vit_model = ViT(vit_config)
-vit_model.to(device)
-total_params = sum(p.numel() for p in vit_model.parameters() if p.requires_grad)
-print(f"Total number of trainable parameters: {total_params}")
-vit_model.eval()
-
-vit_outputs = torch.zeros(test_params.size())
-```
-
-```python
-starttime = time.time()
-with torch.no_grad():
-	for batch in test_loader:
-		break
-	batch = [b.to(device) for b in batch]
-	fields, params = batch
-	vit_output = vit_model(fields)
-	vit_output = vit_output.cpu()
-	vit_outputs[: len(vit_output)] = vit_output
-	print("vit output shape: ", vit_output.shape)
-
-print("Time taken: ", time.time() - starttime)
-```
-
-### Simulated Data Example Figures
-
-```python
-# make inds into a list from 10 to 20
-# inds = list(range(40, 50))
-inds = [19, 23]
-
-plot_img2img_samples(
-	model=stun_model,
-	config=data_config,
-	device=device,
-	test_df=test_df,
-	indices=inds,
-	random_selection=False,
-	num_rand_samples=5,
-	awght_not_kappa2=False,
-	show=True,
-)
-```
-
-```python
-plot_img2img_samples(
-	model=cnn_model,
-	config=data_config,
-	device=device,
-	test_df=test_df,
-	indices=inds,
-	random_selection=False,
-	num_rand_samples=5,
-	awght_not_kappa2=False,
-	show=True,
-	cnn_mode=True,
-	cnn_results=cnn_outputs,
-)
-```
-
-```python
-def plot_img2img_samples2(
-	stun_model: torch.nn.Module,
-	cnn_model: torch.nn.Module,
-	device: torch.device,
-	test_df: Dataset,
-	index: int,
-	cnn_results: Optional[torch.Tensor] = None,
-	save_path: Optional[str] = None,
-	dpi: int = 300,
-	show: bool = True,
-) -> None:
-	field, params = test_df[index]
-	field_np = field[0].cpu().numpy()
-	log_k2_true = params[0].cpu().numpy()
-	true_k2 = np.exp(log_k2_true)
-	true_th = params[1].cpu().numpy()
-	true_rh = params[2].cpu().numpy()
-
-	inp = field.unsqueeze(0).to(device)
-
-	# pass through i2i model
-	stun_pred = stun_model(inp)[0].cpu().detach().numpy()
-	log_k2_stun, th_stun, rh_stun = stun_pred
-	k2_stun = np.exp(log_k2_stun)
-
-	# pass through cnn model
-	if cnn_results is not None:
-		cnn_pred = cnn_results[index].cpu().detach().numpy()
-	else:
-		cnn_pred = cnn_model(inp)[0].cpu().detach().numpy()
-	log_k2_cnn, th_cnn, rh_cnn = cnn_pred
-	k2_cnn = np.exp(log_k2_cnn)
-
-	fig = plt.figure(figsize=(13, 10))
-	gs = fig.add_gridspec(
-		4, 3, height_ratios=[1, 1, 1, 1], width_ratios=[1, 1, 1], wspace=0.3, hspace=0
-	)
-
-	# row o constains spatial field
-	ax_field = fig.add_subplot(gs[0, 0])
-	im_field = ax_field.imshow(field_np, cmap="turbo")
-	ax_field.invert_yaxis()
-	fig.colorbar(
-		im_field,
-		ax=ax_field,
-		orientation="vertical",
-		fraction=0.08,
-		pad=0.02,
-		shrink=0.8,
-	)
-
-	# helper to plot each parameter row
-	def plot_param_row(row, true_data, stun_data, cnn_data):
-		vmin = min(true_data.min(), stun_data.min(), cnn_data.min())
-		vmax = max(true_data.max(), stun_data.max(), cnn_data.max())
-		# true params in col0
-		ax_true = fig.add_subplot(gs[row, 0])
-		im_true = ax_true.imshow(true_data, cmap="viridis", vmin=vmin, vmax=vmax)
-		ax_true.invert_yaxis()
-		# STUN in col1
-		ax_stun = fig.add_subplot(gs[row, 1])
-		im_stun = ax_stun.imshow(stun_data, cmap="viridis", vmin=vmin, vmax=vmax)
-		ax_stun.invert_yaxis()
-		ax_stun.set_yticks([])
-		# CNN in col2
-		ax_cnn = fig.add_subplot(gs[row, 2])
-		im_cnn = ax_cnn.imshow(cnn_data, cmap="viridis", vmin=vmin, vmax=vmax)
-		ax_cnn.invert_yaxis()
-		ax_cnn.set_yticks([])
-		# remove x-ticks for non-bottom rows
-		if row != 3:
-			ax_true.set_xticks([])
-			ax_stun.set_xticks([])
-			ax_cnn.set_xticks([])
-		# shared vertical colorbar at right
-		fig.colorbar(
-			im_cnn,
-			ax=[ax_true, ax_stun, ax_cnn],
-			orientation="vertical",
-			fraction=0.08,
-			pad=0.02,
-			shrink=0.8,
-		)
-
-	# plot param rows
-	plot_param_row(1, true_k2, k2_stun, k2_cnn)
-	plot_param_row(2, true_th, th_stun, th_cnn)
-	plot_param_row(3, true_rh, rh_stun, rh_cnn)
-
-	# high res saving
-	if save_path:
-		fig.savefig(save_path, dpi=dpi, bbox_inches="tight")
-
-	if show:
-		plt.show()
-	else:
-		plt.close(fig)
-
-
-plot_img2img_samples2(
-	stun_model=stun_model,
-	cnn_model=cnn_model,
-	device=device,
-	test_df=test_df,
-	index=23,
-	show=True,
-	cnn_results=cnn_outputs,
-	save_path="../results/figures/plot_sims.png",
-	dpi=600,
-)
-```
-
-
-``````{ end_of_file="notebooks/misc_figures.ipynb" }
-
 ``````{ path="tests/unit/test_integration_pieces.py"  }
 import torch.nn as nn
 import pytest
 import torch
+import os
 from torch.utils.data import DataLoader
 from itertools import product
-
 
 # directly import from latticevision library in directory
 # from latticevision.device import set_device
@@ -7157,12 +6688,34 @@ from latticevision.img2img.base import (
 from latticevision.img2img import TransUNet, UNet, ViT
 
 
+# check for data locally, if not found, download from gdrive
+DATA_DIR = "data"
+DATA_FILE = "I2I_sample_data.h5"
+DATA_PATH = os.path.join(DATA_DIR, DATA_FILE)
+GDRIVE_ID = "1Hz1aRc49sBy0d74iwkfxu_djzwZsEW39"
+GDRIVE_URL = f"https://drive.google.com/uc?id={GDRIVE_ID}"
+
+
+if not os.path.isdir(DATA_DIR):
+	os.makedirs(DATA_DIR, exist_ok=True)
+
+if not os.path.isfile(DATA_PATH):
+	try:
+		import gdown
+	except ImportError:
+		raise ImportError(
+			"Please install gdown so the test can auto-download the data."
+		)
+	print(f"{DATA_PATH} not found. Downloading from Google Drive...")
+	gdown.download(GDRIVE_URL, DATA_PATH, quiet=False)
+
+
 def test_load_data():
 	# load and create dataset
 	transform_funcs = [no_transform, polar_transform]
 
 	# load and create dataset
-	dataset_path = "sample_data/STUN_test_data.h5"
+	dataset_path = DATA_PATH
 
 	val_size = 0.4
 	test_size = 0.5
@@ -7340,13 +6893,50 @@ from latticevision.cnn.eval import fast_cnn_field_tiler
 from latticevision.plotting import plot_img2img_samples
 from latticevision.img2img.eval import eval_model as eval_img2img_model
 
+# check for data locally, if not found, download from gdrive
+DATA_DIR = "data"
+os.makedirs(DATA_DIR, exist_ok=True)
+
+
+# helper function to download data from gdrive
+def download_from_gdrive(filename: str, gdrive_id: str) -> str:
+	"""
+	Make sure data/filename exists.  If not, download from the given
+	Google Drive file-id (via gdown) into data/.
+	Returns the full local path.
+	"""
+	path = os.path.join(DATA_DIR, filename)
+	if not os.path.isfile(path):
+		try:
+			import gdown
+		except ImportError:
+			raise ImportError(
+				"Missing data file and gdown not installed. "
+				"Run `pip install gdown` to enable auto-download."
+			)
+		url = f"https://drive.google.com/uc?id={gdrive_id}"
+		print(f"[setup] {filename} not found—downloading from Google Drive…")
+		gdown.download(url, path, quiet=False)
+	return path
+
+
+# i2i data and gdrive location
+I2I_FILENAME = "I2I_sample_data.h5"
+I2I_GDRIVE_ID = "1Hz1aRc49sBy0d74iwkfxu_djzwZsEW39"
+I2I_FILE_PATH = download_from_gdrive(I2I_FILENAME, I2I_GDRIVE_ID)
+
+# cnn data and gdrive location
+CNN_FILENAME = "CNN_sample_data.h5"
+CNN_GDRIVE_ID = "13o65Gt8KYsC7Jjl7s3Pgg51SuDFZtwUq"
+CNN_FILE_PATH = download_from_gdrive(CNN_FILENAME, CNN_GDRIVE_ID)
+
 
 def test_cnn():
 	# set the device you are on to cpu (github servers)
 	device = torch.device("cpu")
 
 	# load and create dataset
-	dataset_path = "sample_data/CNN_test_data.h5"
+	dataset_path = CNN_FILE_PATH
 	val_size = 0.4
 	test_size = 0.5
 
@@ -7495,8 +7085,8 @@ def test_cnn():
 		show=False,
 	)
 
-	# load in the big STUN data for testing
-	dataset_path_i2i = "sample_data/STUN_test_data.h5"
+	# load in the big i2i data for testing
+	dataset_path_i2i = I2I_FILE_PATH
 	val_size_i2i = 0.4
 	test_size_i2i = 0.5
 
@@ -7580,7 +7170,7 @@ def test_cnn():
 
 ``````{ end_of_file="tests/test_cnn_integration.py" }
 
-``````{ path="tests/test_stun_integration.py"  }
+``````{ path="tests/test_i2i_integration.py"  }
 from itertools import product
 import torch
 import torch.nn as nn
@@ -7611,6 +7201,27 @@ from latticevision.img2img import TransUNet, UNet, ViT
 from latticevision.img2img.train import train_model, TrainingConfig
 from latticevision.img2img.eval import eval_model
 
+# check for data locally, if not found, download from gdrive
+DATA_DIR = "data"
+DATA_FILE = "I2I_sample_data.h5"
+DATA_PATH = os.path.join(DATA_DIR, DATA_FILE)
+GDRIVE_ID = "1Hz1aRc49sBy0d74iwkfxu_djzwZsEW39"
+GDRIVE_URL = f"https://drive.google.com/uc?id={GDRIVE_ID}"
+
+
+if not os.path.isdir(DATA_DIR):
+	os.makedirs(DATA_DIR, exist_ok=True)
+
+if not os.path.isfile(DATA_PATH):
+	try:
+		import gdown
+	except ImportError:
+		raise ImportError(
+			"Please install gdown so the test can auto-download the data."
+		)
+	print(f"{DATA_PATH} not found. Downloading from Google Drive...")
+	gdown.download(GDRIVE_URL, DATA_PATH, quiet=False)
+
 
 @pytest.mark.parametrize(
 	("model_cls", "pos_embed_cls"),
@@ -7625,7 +7236,7 @@ def test_stun(model_cls: nn.Module, pos_embed_cls: PosEmbed):
 	transform_funcs = [no_transform, polar_transform]
 
 	# load and create dataset
-	dataset_path = "sample_data/STUN_test_data.h5"
+	dataset_path = "data/I2I_sample_data.h5"
 	val_size = 0.4
 	test_size = 0.5
 
@@ -7702,6 +7313,7 @@ def test_stun(model_cls: nn.Module, pos_embed_cls: PosEmbed):
 		)
 		break
 
+	# initialize small models
 	if model_cls == UNet:
 		config = ModelConfig(
 			embed_dim=16,
@@ -7824,10 +7436,10 @@ def test_stun(model_cls: nn.Module, pos_embed_cls: PosEmbed):
 		show=False,
 	)
 
-``````{ end_of_file="tests/test_stun_integration.py" }
+``````{ end_of_file="tests/test_i2i_integration.py" }
 
 ``````{ path="README.md"  }
-# LatticeVision (UNDER CONSTRUCTION)
+# LatticeVision 
 
 This repository contains everything you need to train image-to-image (I2I) neural networks—using both U-Net and transformer-based architectures—for non-stationary parameter estimation on large spatial datasets. You’ll find tutorial notebooks, data-generation scripts, training and evaluation procedures, and example applications to climate-model outputs. All code accompanies our paper:
 
@@ -7836,6 +7448,10 @@ This repository contains everything you need to train image-to-image (I2I) neura
 **Authors**: Antony Sikorski, Michael Ivanitskiy, Nathan Lenssen, Douglas Nychka, Daniel McKenzie
 
 The paper is currently available on [arXiv](https://arxiv.org/abs/2505.09803).
+
+<p align="center">
+  <img src="results/figures/flowchart_v5.png" alt="The main workflow of LatticeVision." width="700"/>
+<p align="center"><em>Figure: An illustration of the main workflow of LatticeVision. </em></p>
 
 ---
 
@@ -7847,38 +7463,79 @@ Prior to running this code, one will need to download `Python`, `R` and `RStudio
 
 - **Python:** The `Python` programming language may be downloaded [here](https://www.python.org/downloads/). We use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) as our package manager. 
 
-- **Cloning this repo:** This repository can be cloned by running `git clone https://github.com/antonyxsik/LatticeVision.git` in your terminal. 
+- **Cloning this repo:** This repository can be cloned by running the following your terminal:
+```
+git clone https://github.com/antonyxsik/LatticeVision.git
+``` 
 
 - **Dependencies:**
-  - For `Python`: You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`. If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`. Both install the `latticevision` package, which contains our primary source code.
-  - For `R`: All dependencies can be downloaded by running `R_scripts/required_packages.R`.
+  - For `Python`: You can install dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running 
+
+    ```
+    uv sync
+    ```
+   
+    If you do not wish to use `uv`, you can create a virtual environment however you wish, and run 
+
+    ```
+    pip install -r requirements.txt
+    ```
+   
+  Both install the `latticevision` package, which contains our primary source code.
+  - For `R`: All dependencies can be downloaded by opening and running `R_scripts/required_packages.R`.
 
 ## Quick Start 
 
-- Download sample data and model wghts from google drive. all scripts currently point towards sample data.
-- run make test to run all of the tests.
-- a few additional make commands.
-- describe the notebooks and how they provide a good starting point.
+To get started with our code, download our sample data, network weights (for both a STUN and CNN25 network trained on 30 replicates), and their climate application results from [this Google Drive folder](https://drive.google.com/drive/folders/1OcgHHqqNmK48qdvHCP_PQpXXKq_EYCWD?usp=sharing):
 
+1. Prepare `data/` and `results/` folders: 
 
-## Reproducing our results. 
+   - Create `data/` in the root of this project (ignored by Git), then download everything into it from the `data/` folder in Google Drive (sample synthetic data and climate fields). 
+   - Create `results/` in the root of this project (also ignored), with subfolders `clim_outputs/` and `model_wghts/`. Download the corresponding Google Drive components for both folders. 
+
+2. Explore our tutorial/demo style notebooks in `notebooks/` (`i2i_demo.ipynb`, `cnn_demo.ipynb`, `cesm_application.ipynb`) to get a sense for our core workflows and codebase. These should all point to/utilize the network weights and sample data that you downloaded. 
+
+3. Optionally, run 
+
+   ```
+   make test
+   ```
+
+   to run all tests, and run 
+
+   ```
+   make help
+   ``` 
+
+   to print out other available commands. 
+
+## Reproducing Results
 
 ### Data Generation
+
 In order to reproduce our results, one must first generate the data:
-- To generate synthetic training/testing data for the I2I networks, one must simply run `R_scripts/i2i_datagen.R`. Instructions:
-  1. Open the file in RStudio.
+- To generate synthetic training/testing data for the I2I networks, run `R_scripts/i2i_datagen.R`. Instructions:
+  1. Open the file in `RStudio`.
   2. Set the working directory to be that of the source file location (see the "Important" note in the file).
-  3. Choose the total size of the dataset and the chunk size that it will be created in (below the "Important" note and the imports).
+  3. Choose the total size of the dataset and the chunk size (to avoid overloading RAM) that it will be created in (below the "Important" note and the imports).
   4. Run the script (``Ctrl+A``, then ``Ctrl+Enter``). This will create `data/I2I_data.h5`. 
 - To make the data for the CNNs, one repeats the same process as above with `R_scripts/cnn_datagen.R`. This will create `data/CNN_data.h5`.
 
 ### Train Models and Test on Synthetic Data
-- Run the scripts, these also will give you all of the simulated data results.
+
+- You can train **_all_** of the I2I networks by running `notebooks/i2i_trainloop.py`. 
+- **_All_** CNNs can be trained by running `notebooks/cnn_trainloop.py`.
+- Both of these scripts train the networks, save their weights in `results/model_wghts/`, evaluate them on synthetic test data (results saved in `results/metrics/`), and then pass the climate model fields through the networks (saved in `results/clim_outputs/`). 
+
+**_Note_**: 
+These scripts will train 4 U-Nets, 16 ViTs, 16 STUNs, and 12 CNNs due to different combinations of hyperparameters (n_replicates, positional embeddings, etc.). This may be quite computationally intensive. We highly recommend modifying the lists in the scripts (that determine which hyperparams to loop through) to reflect the networks that you are interested in training and evaluating.  
 
 
 ### Climate Application
-- do the exploring_cesm notebook, then run the R script which does the climate things. 
 
+- The training scripts above automatically generate the parameter estimates for the climate model fields in `results/clim_outputs/`. 
+- Alternatively, one can also load a trained network into `notebooks/cesm_application.ipynb` and uncomment the saving code to create these. 
+- After the parameters have been estimated, open `R_scripts/cesm_ensemble_sim.R` and point towards the outputs of interest in order to generate synthetic climate ensembles and reproduce our correlation comparison experiments. 
 
 ---
 
@@ -8136,6 +7793,7 @@ dependencies = [
     "h5py>=3.12.1",
     "pysr>=0.19.4",
     "netcdf4>=1.5.8",
+    "gdown>=5.2.0",
 ]
 
 # default groups to install
@@ -8221,6 +7879,7 @@ exports = [
     [tool.lmcat.glob_process]
         "[mM]akefile" = "makefile_recipes"
         "*.ipynb" = "ipynb_to_md"
+
 ``````{ end_of_file="pyproject.toml" }
 
 ``````{ path="requirements.txt"  }
@@ -8264,7 +7923,9 @@ attrs==25.1.0
 babel==2.17.0
     # via jupyterlab-server
 beautifulsoup4==4.13.3
-    # via nbconvert
+    # via
+    #   gdown
+    #   nbconvert
 bleach==6.2.0
     # via nbconvert
 blobfile==3.0.0
@@ -8337,6 +7998,7 @@ filelock==3.17.0
     # via
     #   blobfile
     #   datasets
+    #   gdown
     #   huggingface-hub
     #   juliapkg
     #   torch
@@ -8353,6 +8015,8 @@ fsspec==2024.12.0
     #   datasets
     #   huggingface-hub
     #   torch
+gdown==5.2.0
+    # via latticevision
 h11==0.14.0
     # via httpcore
 h5py==3.13.0
@@ -8678,6 +8342,8 @@ pygments==2.19.1
     #   rich
 pyparsing==3.2.1
     # via matplotlib
+pysocks==1.7.1
+    # via requests
 pysr==1.5.1
     # via latticevision
 pytest==8.3.5
@@ -8725,6 +8391,7 @@ regex==2024.11.6
 requests==2.32.3
     # via
     #   datasets
+    #   gdown
     #   huggingface-hub
     #   jupyterlab-server
     #   kagglehub
@@ -8827,6 +8494,7 @@ tornado==6.4.2
 tqdm==4.67.1
     # via
     #   datasets
+    #   gdown
     #   huggingface-hub
     #   kagglehub
     #   torchtune
