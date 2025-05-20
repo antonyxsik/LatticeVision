@@ -70,6 +70,7 @@ To get started with our code, download our sample data, network weights (for bot
 ## Reproducing Results
 
 ### Data Generation
+
 In order to reproduce our results, one must first generate the data:
 - To generate synthetic training/testing data for the I2I networks, run `R_scripts/i2i_datagen.R`. Instructions:
   1. Open the file in `RStudio`.
@@ -79,6 +80,7 @@ In order to reproduce our results, one must first generate the data:
 - To make the data for the CNNs, one repeats the same process as above with `R_scripts/cnn_datagen.R`. This will create `data/CNN_data.h5`.
 
 ### Train Models and Test on Synthetic Data
+
 - You can train **_all_** of the I2I networks by running `notebooks/i2i_trainloop.py`. 
 - **_All_** CNNs can be trained by running `notebooks/cnn_trainloop.py`.
 - Both of these scripts train the networks, save their weights in `results/model_wghts/`, evaluate them on synthetic test data (results saved in `results/metrics/`), and then pass the climate model fields through the networks (saved in `results/clim_outputs/`). 
@@ -87,6 +89,7 @@ In order to reproduce our results, one must first generate the data:
 
 
 ### Climate Application
+
 - The training scripts above automatically generate the parameter estimates for the climate model fields in `results/clim_outputs/`. 
 - Alternatively, one can also load a trained network into `notebooks/cesm_application.ipynb` and uncomment the saving code to create these. 
 - After the parameters have been estimated, open `R_scripts/cesm_ensemble_sim.R` and point towards the outputs of interest in order to generate synthetic climate ensembles and reproduce our correlation comparison experiments. 
