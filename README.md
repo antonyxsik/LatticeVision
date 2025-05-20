@@ -40,8 +40,8 @@ In order to reproduce our results, one must first generate the data:
   1. Open the file in RStudio.
   2. Set the working directory to be that of the source file location (see the "Important" note in the file).
   3. Choose the total size of the dataset and the chunk size that it will be created in (below the "Important" note and the imports).
-  4. Run the script (``Ctrl+A``, then ``Ctrl+Enter``).
-- To make the data for the CNNs, one repeats the same process as above with `R_scripts/cnn_datagen.R`. 
+  4. Run the script (``Ctrl+A``, then ``Ctrl+Enter``). This will create `data/I2I_data.h5`. 
+- To make the data for the CNNs, one repeats the same process as above with `R_scripts/cnn_datagen.R`. This will create `data/CNN_data.h5`.
 
 ### Train Models and Test on Synthetic Data
 - Run the scripts, these also will give you all of the simulated data results.

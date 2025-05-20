@@ -124,11 +124,12 @@ def eval_model(
 		Computes RMSE, MAE, R2, SSIM, PSNR, and NRMSE between two arrays.
 		Assumes true and pred have shape (num_images, height, width).
 		"""
+		eps = 1e-6
 		mse = np.mean((true - pred) ** 2)
 		rmse = np.sqrt(mse)
 		mae = np.mean(np.abs(true - pred))
-		r2 = 1 - np.sum((true - pred) ** 2) / np.sum((true - np.mean(true)) ** 2)
-		nrmse = rmse / (np.max(true) - np.min(true))
+		r2 = 1 - np.sum((true - pred) ** 2) / np.sum((true - np.mean(true)) ** 2 + eps)
+		nrmse = rmse / (np.max(true) - np.min(true) + eps)
 
 		# compute SSIM and PSNR for each image and then average
 		ssim_list = []
