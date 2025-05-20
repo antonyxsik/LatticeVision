@@ -1,8 +1,8 @@
 # Stats
 - 38 files
-- 8405 (8.4K) lines
-- 236964 (237K) chars
-- 25797 (26K) `whitespace-split` tokens
+- 8890 (8.9K) lines
+- 247363 (247K) chars
+- 27279 (27K) `whitespace-split` tokens
 
 # File Tree
 
@@ -11,17 +11,17 @@ LatticeVision
 ├── .github                             
 │   └── workflows                       
 │    └── checks.yml                     [   41L       790C    92T]
-├── R_data_generation                   
-│   ├── CESM_ensemble_sim.R             [  389L    10,381C 1,225T]
-│   ├── LKrig.sim.mercator.R            [  189L     6,319C   908T]
-│   ├── cnn_datasim_aniso.R             [  255L     7,017C   731T]
-│   ├── helper_funcs.R                  [  409L    12,739C 1,476T]
-│   └── stun_datasim_clim_aniso.R       [  699L    22,938C 2,619T]
+├── R_scripts                           
+│   ├── cesm_ensemble_sim.R             [  363L     9,446C 1,169T]
+│   ├── cnn_datagen.R                   [  252L     7,211C   798T]
+│   ├── helper_funcs.R                  [  606L    19,226C 2,450T]
+│   ├── i2i_datagen.R                   [  636L    21,360C 2,449T]
+│   └── required_packages.R             [   13L       317C    21T]
 ├── latticevision                       
 │   ├── cnn                             
 │   │   ├── __init__.py                 [    0L         0C     0T]
 │   │   ├── dataset.py                  [  145L     4,185C   490T]
-│   │   ├── eval.py                     [  309L     9,310C 1,101T]
+│   │   ├── eval.py                     [  310L     9,335C 1,108T]
 │   │   ├── model.py                    [  105L     2,780C   328T]
 │   │   └── train.py                    [  301L     9,616C 1,061T]
 │   ├── img2img                         
@@ -33,7 +33,7 @@ LatticeVision
 │   │   ├── __init__.py                 [   16L       281C    29T]
 │   │   ├── base.py                     [  503L    15,616C 1,699T]
 │   │   ├── dataset.py                  [  183L     5,407C   670T]
-│   │   ├── eval.py                     [  289L    10,055C 1,078T]
+│   │   ├── eval.py                     [  290L    10,080C 1,085T]
 │   │   └── train.py                    [  350L    11,754C 1,300T]
 │   ├── stun                            
 │   ├── __init__.py                     [    0L         0C     0T]
@@ -42,22 +42,21 @@ LatticeVision
 │   ├── plotting.py                     [  329L    10,082C 1,141T]
 │   └── seed.py                         [   27L       632C    59T]
 ├── notebooks                           
-│   ├── old                             
-│   ├── cnn_demo.ipynb                  [  683L 3,618,521C 1,796T]
+│   ├── cnn_demo.ipynb                  [  663L 1,043,199C 1,681T]
 │   ├── cnn_trainloop.py                [  339L     8,560C   775T]
-│   ├── exploring_CESM.ipynb            [  925L 1,928,170C 2,720T]
-│   ├── img2img_demo.ipynb              [  846L 3,780,543C 2,487T]
-│   ├── img2img_trainloop.py            [  292L     7,458C   718T]
+│   ├── exploring_CESM.ipynb            [  925L 1,928,173C 2,720T]
+│   ├── i2i_demo.ipynb                  [  846L 3,780,543C 2,487T]
+│   ├── i2i_trainloop.py                [  292L     7,458C   718T]
 │   └── misc_figures.ipynb              [1,188L 3,732,318C 3,376T]
 ├── tests                               
 │   ├── unit                            
 │   │   └── test_integration_pieces.py  [  186L     4,249C   406T]
 │   ├── test_cnn_integration.py         [  257L     5,883C   535T]
 │   └── test_stun_integration.py        [  242L     5,384C   479T]
-├── README.md                           [   10L       423C    65T]
+├── README.md                           [   68L     3,622C   481T]
 ├── makefile                            [1,633L    50,043C 5,988T]
-├── pyproject.toml                      [  112L     2,701C   308T]
-├── requirements.txt                    [  172L     4,486C   346T]
+├── pyproject.toml                      [  112L     2,693C   308T]
+├── requirements.txt                    [  668L    13,670C 1,475T]
 ```
 
 # File Contents
@@ -106,34 +105,25 @@ jobs:
         # TODO: add ruff 
 ``````{ end_of_file=".github/workflows/checks.yml" }
 
-``````{ path="R_data_generation/CESM_ensemble_sim.R"  }
+``````{ path="R_scripts/cesm_ensemble_sim.R"  }
+##########             IMPORTANT              ###########
+#-------------------------------------------------------#
+# Navigate to "Session" in the top left of RStudio and
+# click on "Set Working Directory" and then 
+# choose "To Source File Location". 
+# Now you can run the script. 
+#-------------------------------------------------------#
+
 library(LatticeKrig)
 library(spam64)
 library(tictoc)
 library(rhdf5)
 library(maps)
-library(moments)
-library(nortest)
-library(ggplot2)
-library(ggpubr)
-library(dplyr)
-library(scico)
 library(cmocean)
-library(RColorBrewer)
-theme_set(theme_pubr())
+library(here)
+# helper functions
+source(here("R_scripts", "helper_funcs.R"))
 
-rm(list=ls())
-setwd("C:/Users/anton/Desktop/Research/Paper_3/LatticeVision")
-
-# Load in modified LK files 
-source(
-  "C:/Users/anton/Desktop/Research/Paper_3/LatticeVision/R_data_generation/LKrig.sim.mercator.R"
-)
-
-#helper functions (including generation function)
-source(
-  "C:/Users/anton/Desktop/Research/Paper_3/LatticeVision/R_data_generation/helper_funcs.R"
-)
 
 ###########################################
 ######   Data and Initial Setup    #####
@@ -142,8 +132,12 @@ rows <- 288
 columns <- 192
 
 
-# load in Vision Network (STUN,I2I,etc) outputs -------------
-file_path_s <- "data/modelTransUNet_reps30_posRotaryPosEmbed_clim_output.h5"
+# load in i2i network clim outputs
+file_path_s <- here(
+  "results",
+  "clim_outputs",
+  "modelTransUNet_reps30_posRotaryPosEmbed_clim_output.h5"
+)
 h5ls(file_path_s)
 df_STUN <- h5read(file_path_s, "clim_output")
 
@@ -161,8 +155,12 @@ rho_s <- df_STUN[,,3]
 rhox_s <- sqrt(rho_s)
 rhoy_s <- 1/rhox_s
 
-# load in CNN outputs ---------------------
-file_path_c <- "data/modelCNN_size25_reps30_clim_output.h5"
+# load in CNN outputs
+file_path_c <- here(
+  "results",
+  "clim_outputs",
+  "modelCNN_size25_reps30_clim_output.h5"
+)
 h5ls(file_path_c)
 df_CNN <- h5read(file_path_c, "clim_output")
 
@@ -177,8 +175,14 @@ rho_c <- df_CNN[,,3]
 rhox_c <- sqrt(rho_c)
 rhoy_c <- 1/rhox_c
 
-# Load in the Climate/temp data -----------------
-load("C:/Users/anton/Desktop/Research/Paper_3/LatticeVision/sample_data/JJAPatternScalingSlope.rda")
+# Load in the Climate/temp data 
+load(
+  here(
+  "data",
+  "JJAPatternScalingSlope.rda"
+  )
+)
+
 
 # normalize all clim fields 
 JJASlopeNorm <- JJASlope
@@ -192,7 +196,7 @@ JJASlopeMean <- pacific_centering(JJASlopeMean)
 JJASlopeSd <- pacific_centering(JJASlopeSd)
 
 
-# Coordinates and data grids -------------
+# Coordinates and data grids 
 xcoord = c(1:dim(JJASlope)[1])
 ycoord = c(1:dim(JJASlope)[2])
 # lon <- seq(-180, 180, length.out = dim(JJASlope)[1])
@@ -273,9 +277,7 @@ n_points <- 50
 results <- data.frame(
   pointx    = integer(n_points),
   pointy    = integer(n_points),
-  rmse_cov  = numeric(n_points),
   rmse_stun = numeric(n_points),
-  rmse_c    = numeric(n_points),
   rmse_cnn  = numeric(n_points)
 )
 
@@ -288,25 +290,6 @@ for (i in seq_len(n_points)) {
   py <- sample(seq_len(columns), 1)
   results$pointx[i] <- px
   results$pointy[i] <- py
-  
-  # compute normalized covariance surfaces
-  cov_c <- plot_cov_surface(
-    LKinfo     = LKinfo_c,
-    real_field = first_field_norm,
-    loc_x      = px, 
-    loc_y      = py,
-    plotting   = FALSE
-  )
-  cor_c <- cov_c / max(cov_c)
-  
-  cov_s <- plot_cov_surface(
-    LKinfo     = LKinfo_s,
-    real_field = first_field_norm,
-    loc_x      = px, 
-    loc_y      = py,
-    plotting   = FALSE
-  )
-  cor_s <- cov_s / max(cov_s)
   
   # base correlation field
   target_ts <- as.vector(JJASlopeNorm[px, py, ])
@@ -323,9 +306,7 @@ for (i in seq_len(n_points)) {
   cors_cnn        <- apply(f_cnn, c(1,2), function(x) cor(x, target_ts_cnn))
   
   # compute and store RMSEs
-  results$rmse_cov[i]  <- sqrt(mean((cors       - cor_s)     ^ 2))
   results$rmse_stun[i] <- sqrt(mean((cors       - cors_stun) ^ 2))
-  results$rmse_c[i]    <- sqrt(mean((cors       - cor_c)     ^ 2))
   results$rmse_cnn[i]  <- sqrt(mean((cors       - cors_cnn)  ^ 2))
 }
 
@@ -334,23 +315,27 @@ tt  <- toc(log = TRUE)
 elapsed_time <- tt$toc - tt$tic
 
 # sum‐total of all RMSE values
-sum_total_rmse_s <- sum(results$rmse_cov)
 sum_total_rmse_stun <- sum(results$rmse_stun)
-sum_total_rmse_c <- sum(results$rmse_c)
 sum_total_rmse_cnn <- sum(results$rmse_cnn)
 
-
 # print summaries
-cat("Sum total RMSE stun exact: ", sum_total_rmse_s, "\n")
 cat("Sum total RMSE stun empirical: ", sum_total_rmse_stun, "\n")
-cat("Sum total RMSE cnn exact: ", sum_total_rmse_c, "\n")
 cat("Sum total RMSE cnn empirical: ", sum_total_rmse_cnn, "\n")
 cat("Total time (s): ", elapsed_time, "\n")
 
 
-t.test(results$rmse_stun, results$rmse_cnn)
-t.test(results$rmse_stun, results$rmse_cnn, paired = TRUE)
+# note paired (shouldnt use)
+t.test(results$rmse_stun, results$rmse_cnn, 
+       paired = FALSE, 
+       alternative = "less", 
+       conf.level = 0.99)
 
+# paired (should use)
+obj <- t.test(results$rmse_stun, results$rmse_cnn, 
+              paired = TRUE, 
+              alternative = "less", 
+              conf.level = 0.99)
+print(obj)
 
 
 ###########################################
@@ -359,49 +344,36 @@ t.test(results$rmse_stun, results$rmse_cnn, paired = TRUE)
 
 
 tic()
+# either randomly sample a point 
 pointx <- sample(1:rows,1)
 pointy <- sample(1:columns,1)
+# or use the Nino3.4 one (one of these pairs must be commented out)
 pointx <- 170 # enso choice 
 pointy <- 97
 print(c(pointx,pointy))
 
-cov_c <- plot_cov_surface(
-  LKinfo = LKinfo_c,
-  real_field = first_field_norm,
-  loc_x = pointx, 
-  loc_y = pointy,
-  plotting = FALSE
-)
-cor_c <- cov_c/max(cov_c)
-
-cov_s <- plot_cov_surface(
-  LKinfo = LKinfo_s,
-  real_field = first_field_norm,
-  loc_x = pointx, 
-  loc_y = pointy,
-  plotting = FALSE
-)
-cor_s <- cov_s/max(cov_s)
+# calculate correlations
 target_ts <- as.vector(JJASlopeNorm[pointx, pointy, ])  
 cors <- apply(JJASlopeNorm, c(1, 2), function(x) cor(x, target_ts))
+
 f_stun <- array(object_s$f, dim = c(rows, columns, 1000))
 target_ts_stun <- as.vector(f_stun[pointx, pointy, ])
 cors_stun <- apply(f_stun, c(1, 2), function(x) cor(x, target_ts_stun))
+
 f_cnn <- array(object_c$f, dim = c(rows, columns, 1000))
 target_ts_cnn <- as.vector(f_cnn[pointx, pointy, ])
 cors_cnn <- apply(f_cnn, c(1, 2), function(x) cor(x, target_ts_cnn))
 
-# take the rmse of cors and cov_surf_s
-sqrt(mean((cors - cor_s)^2 ))
+# take the rmse
 sqrt(mean((cors - cors_stun)^2 ))
-sqrt(mean((cors - cor_c)^2 ))
 sqrt(mean((cors - cors_cnn)^2 ))
 toc()
 
 
-#trim poles
+#trim poles for visuals
 vertchop <- 11:182
 latv     <- lat[vertchop]
+
 
 # compute zlims for covs
 zmax <- max(cors, cors_stun, cors_cnn)
@@ -409,11 +381,10 @@ zmin <- min(cors, cors_stun, cors_cnn)
 zlim = c(-zmax, zmax)
 
 colorchoice = cmocean("balance")(22)
-
 bordercol = "grey10"
 
 
-# compute common z‐limits for actual fields
+# compute common zlims for actual fields
 zmaxclim  <- max(JJASlopeNorm[,vertchop,1], f_stun[,vertchop,4], f_cnn[,vertchop,4])
 zminclim  <- min(JJASlopeNorm[,vertchop,1], f_stun[,vertchop,4], f_cnn[,vertchop,4])
 zlimclim  <- c(zminclim, zmaxclim)
@@ -421,7 +392,7 @@ zlimclim  <- c(zminclim, zmaxclim)
 
 
 ### ACTUAL FIELDS
-# png("clim_compare_vit_cnn9.png", width=4000, height=1000, res=600)
+# png("clim_compare_stun_cnn25.png", width=4000, height=1000, res=600)
 par(mfrow=c(1,3), mar=c(1,1,1,1), oma=c(1,1,0,0))
 
 # 1) true field
@@ -452,21 +423,22 @@ par(mfrow = c(1,1))
 
 
 # CORRELATIONS
-# png("cov_compare_vit_cnn9.png", width=4000, height=1000, res=600)
+# png("cov_compare_stun_cnn25.png", width=4000, height=1000, res=600)
 par(mfrow=c(1,3), mar=c(1,1,1,1), oma=c(1,1,0,0))
 
 
+# 1) actual cov
 image(x = lon, y = latv,z = cors[,vertchop], col = colorchoice, main = "",
       zlim = zlim, 
       xlab = "", ylab = "")
 map("world2", add = TRUE, col = bordercol, lwd = 0.5)
-#stun cov
+# 2) stun cov
 image(x = lon, y = latv,z =cors_stun[,vertchop], col = colorchoice, 
       main = "",
       zlim = zlim, yaxt = "n", 
       xlab = "", ylab = "")
 map("world2", add = TRUE, col = bordercol, lwd = 0.5)
-#cnn cov
+# 3) cnn cov
 image(x = lon, y = latv,z =cors_cnn[,vertchop], col = colorchoice, 
       main = "",
       zlim = zlim, yaxt = "n", 
@@ -480,6 +452,7 @@ par(mfrow = c(1,1))
 # png("clim_colorbar_v3_div.png", width = 2333, height = 2000, res = 600)
 par( mar=c(1,1,1,1))
 
+# will trim this plot
 image.plot(x = lon, y = latv,z =cors_cnn[,vertchop], col = colorchoice, 
            main = "",
            zlim = zlim, yaxt = "n", 
@@ -490,233 +463,40 @@ image.plot(x = lon, y = latv,z =cors_cnn[,vertchop], col = colorchoice,
 # png("cov_colorbar_v3_div.png", width = 2333, height = 2000, res = 600)
 par( mar=c(1,1,1,1))
 
+# will trim this plot
 image.plot(x = lon, y = latv,z =JJASlopeNorm[,vertchop,1], col = turbo(256), 
            main = "",
            zlim = zlimclim, yaxt = "n", 
            xlab = "", ylab = "")
 # dev.off()
 
+``````{ end_of_file="R_scripts/cesm_ensemble_sim.R" }
 
-``````{ end_of_file="R_data_generation/CESM_ensemble_sim.R" }
+``````{ path="R_scripts/cnn_datagen.R"  }
+##########             IMPORTANT              ###########
+#-------------------------------------------------------#
+# Navigate to "Session" in the top left of RStudio and
+# click on "Set Working Directory" and then 
+# choose "To Source File Location". 
+# Now you can run the script. 
+#-------------------------------------------------------#
 
-``````{ path="R_data_generation/LKrig.sim.mercator.R"  }
-library(LatticeKrig)
-library(spam64)
-
-rm(list=ls())
-setwd("C:/Users/anton/Desktop/Research/Paper_3/LatticeVision")
-
-
-# Simulation function for generating realizations of the SAR
-LKrig.sim <- function(x1, LKinfo, M = 1, just.coefficients = FALSE) {
-  Q <- LKrig.precision(LKinfo)
-  Qc <- chol(Q, memory = LKinfo$choleskyMemory)
-  m <- LKinfo$latticeInfo$m
-  E <- matrix(rnorm(M * m), nrow = m, ncol = M)
-  randomC <- backsolve(Qc, E)
-  if (just.coefficients) {
-    return(randomC)
-  } 
-  else {
-    PHI1 <- LKrig.basis(x1, LKinfo)
-    return(PHI1 %*% randomC)
-  }
-}	
-
-
-# LKrig function that creates the precision matrix
-# which requires the creation of the SAR matrix 
-LKrig.precision <- function(LKinfo, return.B = FALSE,
-                            verbose=FALSE) { 
-  L <- LKinfo$nlevel
-  offset <- LKinfo$latticeInfo$offset
-  # some checks on arguments
-  LKinfoCheck(LKinfo)
-  # ind holds non-zero indices and ra holds the values
-  ind <- NULL
-  ra <- NULL
-  da <- rep(0, 2)
-  # loop over levels
-  for (j in 1:L) {
-    # evaluate the SAR matrix at level j.
-    tempB<- LKrigSAR( LKinfo, Level=j)
-    if( verbose){
-      cat("dim indices in spind of B:",dim( tempB$ind) , fill=TRUE)            	
-    }
-    # accumulate the new block
-    # for the indices that are not zero
-    ra <- c(ra,tempB$ra )
-    ind <- rbind(ind, tempB$ind + offset[j])
-    # increment the dimensions
-    da[1] <- da[1] + tempB$da[1]
-    da[2] <- da[2] + tempB$da[2]
-  }
-  # dimensions of the full matrix
-  # should be da after loop
-  # check this against indices in LKinfo
-  #
-  if ((da[1] != offset[L + 1]) | (da[2] != offset[L + 
-                                                  1])) {
-    stop("Mismatch of dimension with size in LKinfo")
-  }
-  # convert to spind format:
-  # tempBtest <- list(ind = ind, ra = ra, da = da) 
-  # tempB<- spind2spam( tempBtest)
-  if( verbose){
-    cat("dim of ind (fullB):", dim( ind), fill=TRUE)
-  }
-  tempB <- spam( list( ind=ind, ra), nrow=da[1], ncol=da[2])
-  if( verbose){
-    cat("dim after spind to spam in precision:", dim( tempB), fill=TRUE)
-  }
-  if (return.B) {
-    return(tempB)
-  }
-  else {
-    # find precision matrix Q = t(B)%*%B and return
-    return(t(tempB) %*% (tempB))
-  }
-}
-
-
-# returns sparse SAR matrix which is used in the 
-# precision function, which is then called in the 
-# simulation function. here we make a slight edit
-# to make the B matrix have periodic properties
-# this allows us to respect the Mercator projection
-
-LKrigSAR <- function( object, Level, ...){ 
-  
-  mx1<-              object$latticeInfo$mx[Level,1]
-  mx2<-              object$latticeInfo$mx[Level,2]
-  m<- mx1*mx2
-  #
-  a.wght<- (object$a.wght)[[Level]]
-  
-  stationary <-     (attr( object$a.wght, "stationary"))[Level]
-  first.order<-     attr( object$a.wght, "first.order")[Level]
-  isotropic  <-     attr(object$a.wght, "isotropic")[Level]
-  distance.type <-  object$distance.type
-  if( all(stationary & isotropic) ) {
-    if( any(unlist(a.wght) < 4) ){
-      stop("a.wght less than 4")
-    }
-  }
-  
-  #  either  a.wght is a  matrix (rows index lattice locations)
-  #  or fill out matrix of this size with stationary values
-  dim.a.wght <- dim(a.wght)
-  
-  # figure out if just a single a.wght or matrix is passed
-  # OLD see above first.order <-  (( length(a.wght) == 1)|( length(dim.a.wght) == 2)) 
-  
-  # order of neighbors and center
-  index <- c(5, 4, 6, 2, 8, 3, 9, 1, 7)
-  # dimensions of precision matrix
-  da <- as.integer(c(m, m))
-  # contents of sparse matrix organized as a 2-dimensional array
-  # with the second dimension indexing the weights for center and four nearest neighbors.
-  if (first.order) {
-    ra <- array(NA, c(mx1*mx2, 5))
-    ra[,  1] <- a.wght
-    ra[,  2:5] <- -1
-  }
-  else {
-    ra <- array(NA, c(mx1 * mx2, 9))
-    for (kk in 1:9) {
-      # Note that correct filling happens both as a scalar or as an mx1 X mx2 matrix
-      if (stationary) {
-        ra[ , kk] <- a.wght[index[kk]]
-      }
-      else {
-        ra[ ,  kk] <- a.wght[ , index[kk]]
-      }
-    }
-  }
-  #
-  #  Order for 5 nonzero indices is: center, top, bottom, left right
-  #  a superset of indices is used to make the arrays regular.
-  #  and NAs are inserted for positions beyond lattice. e.g. top neighbor
-  #  for a lattice point on the top edge. The NA pattern is also
-  #  consistent with how the weight matrix is filled.
-  #
-  Bi <- rep(1:m, 5)
-  i.c <- matrix(1:m, nrow = mx1, ncol = mx2)
-  # indices for center, top, bottom, left, right or ... N, S, E, W
-  # NOTE that these are just shifts of the original matrix
-  Bj <- c(i.c,
-          LKrig.shift.matrix(i.c, 0, -1), # top 
-          LKrig.shift.matrix(i.c, 0,  1), #bottom
-          LKrig.shift.matrix(i.c, 1,  0, periodic = TRUE), #left (periodic here)
-          LKrig.shift.matrix(i.c, -1, 0, periodic = TRUE)  #right (periodic here)
-  )
-  # indices for NW, SW, SE, SW
-  if (!first.order) {
-    Bi <- c(Bi, rep(1:m, 4))
-    Bj <- c(Bj,
-            LKrig.shift.matrix(i.c,  1,  1, periodic = c(TRUE,TRUE)), # bottom left (periodic here)
-            LKrig.shift.matrix(i.c, -1,  1, periodic = c(TRUE,TRUE)), # bottom right (periodic here)
-            LKrig.shift.matrix(i.c,  1, -1, periodic = c(TRUE,TRUE)), # top left (periodic here)
-            LKrig.shift.matrix(i.c, -1, -1, periodic = c(TRUE,TRUE)) # top right (periodic here)
-            # LKrig.shift.matrix(i.c,  1,  1), # bottom left 
-            # LKrig.shift.matrix(i.c, -1,  1), # bottom right 
-            # LKrig.shift.matrix(i.c,  1, -1), # top left 
-            # LKrig.shift.matrix(i.c, -1, -1) # top right 
-    )
-  }
-  
-  # find all cases that are actually in lattice
-  good <- !is.na(Bj)
-  # remove cases that are beyond the lattice and coerce to integer
-  # also reshape ra as a vector stacking the 9 columns
-  #
-  Bi <- as.integer(Bi[good])
-  Bj <- as.integer(Bj[good])
-  ra <- c(ra)[good]
-  # return spind format because this is easier to accumulate
-  # matrices at different multiresolution levels
-  # see calling function LKrig.precision
-  #
-  # below is an add on hook to normalize the values to sum to 4 at boundaries
-  if(!is.null(object$setupArgs$BCHook)){
-    M<- da[1]
-    for( i in 1: M){
-      rowI<- which(Bi== i)
-      rowNN<- rowI[-1]
-      ra[rowNN]<-  4*ra[rowNN] / length(rowNN )
-    }
-    
-  }
-  return(list(ind = cbind(Bi, Bj), ra = ra, da = da))
-}
-
-``````{ end_of_file="R_data_generation/LKrig.sim.mercator.R" }
-
-``````{ path="R_data_generation/cnn_datasim_aniso.R"  }
 library(LatticeKrig)
 library(spam64)
 library(tictoc)
 library(rhdf5)
-
-rm(list=ls())
-setwd("C:/Users/anton/Desktop/Research/Paper_3/LatticeVision")
-
-
-###########################################
-###### Helper Functions ######
-###########################################
+library(here)
+# helper functions
+source(here("R_scripts", "helper_funcs.R"))
 
 
-# predict functions for param grids 
-predict.surfaceGrid<- function(object,x){
-  interp.surface( object, x)
-}
-
-predict.constantValue<- function(object,x){
-  n<- length(object$values)
-  m<- nrow( x)
-  return( matrix( object$values, nrow=m, ncol=n, byrow=TRUE ) )
-}
+# Some choices to make: 
+# total number of simulated fields 
+N_SIMS <- 80000
+# sidelength of the field (window size)
+sidelen <- 25 
+# Other options can be tweaked in the
+# "Experimental Setup and Hyperparameters" section below. 
 
 
 ###########################################
@@ -860,10 +640,9 @@ hist(log(awghts-4), main = "log kappas", col = "lightgreen")
 hist(awghts, main = "awghts", col = "gold")
 par(mfrow = c(1,1))
 
-N_SIMS <- 80000
+
 n_replicates <- 30 
 n_buffer <- 5
-sidelen <- 25 
 verbose <- FALSE
 sanity_plotting <- FALSE
 random_seed <- 777
@@ -873,6 +652,7 @@ random_seed <- 777
 ########## Simulation and Saving ##########
 ###########################################
 
+# Simulation
 dataset <- generate_cnn_data(
   N_SIMS = N_SIMS, 
   n_replicates = n_replicates,
@@ -885,10 +665,9 @@ dataset <- generate_cnn_data(
 )
 
 # Saving the dataset 
-########################################################
 
-file_name <- "data/CNN_data.h5"
-#file_name <- data/CNN_test_data.h5
+file_name <- here("data", "CNN_data.h5")
+#file_name <- here("data", "CNN_sample_data.h5")
 dataset_name <- "fields"
 
 nx <- sidelen^2
@@ -924,63 +703,231 @@ h5closeAll()
 #### Loading in the Data (Sanity) ####
 ############################################
 
-file_name <- "data/CNN_data.h5"
-#file_name <- data/CNN_test_data.h5
-dataset_name <- "fields"
+# file_name <- here("data", "CNN_data.h5")
+# #file_name <- here("data", "CNN_sample_data.h5")
+# dataset_name <- "fields"
+# 
+# print(h5ls(file_name))
+# 
+# dataset <- h5read(file_name, dataset_name)
+# print(dim(dataset))
+# 
+# k <- 1
+# replicate_num <- 7
+# 
+# gridList<- list( x= seq( 1,sidelen,length.out= sidelen),
+#                  y= seq( 1,sidelen,length.out= sidelen) )
+# sGrid<- make.surface.grid(gridList)
+# 
+# image.plot( as.surface( sGrid, dataset[,replicate_num,k]) , col = turbo(256),
+#             main = "Sample Field",
+#             xlab = paste("Kappa2:", round(dataset[1, n_replicates+1, k], 4),
+#                          "Theta:", round(dataset[2, n_replicates+1, k], 3),
+#                          "Rho:", round(dataset[3, n_replicates+1, k], 3))
+#             )
 
-print(h5ls(file_name))
+``````{ end_of_file="R_scripts/cnn_datagen.R" }
 
-dataset <- h5read(file_name, dataset_name)
-print(dim(dataset))
-
-k <- 1
-replicate_num <- 7
-
-gridList<- list( x= seq( 1,sidelen,length.out= sidelen),
-                 y= seq( 1,sidelen,length.out= sidelen) )
-sGrid<- make.surface.grid(gridList)
-
-image.plot( as.surface( sGrid, dataset[,replicate_num,k]) , col = turbo(256), 
-            main = "Sample Field", 
-            xlab = paste("Kappa2:", round(dataset[1, n_replicates+1, k], 4), 
-                         "Theta:", round(dataset[2, n_replicates+1, k], 3), 
-                         "Rho:", round(dataset[3, n_replicates+1, k], 3))
-            )
-
-
-
-``````{ end_of_file="R_data_generation/cnn_datasim_aniso.R" }
-
-``````{ path="R_data_generation/helper_funcs.R"  }
+``````{ path="R_scripts/helper_funcs.R"  }
 library(LatticeKrig)
 library(spam64)
 library(tictoc)
 library(rhdf5)
 library(maps)
-library(moments)
-library(nortest)
-library(ggplot2)
-library(ggpubr)
-library(dplyr)
-library(scico)
 library(cmocean)
-library(RColorBrewer)
-theme_set(theme_pubr())
-
-
+library(here)
 rm(list=ls())
-setwd("C:/Users/anton/Desktop/Research/Paper_3/LatticeVision")
 
-# Load in modified LK files 
-source(
-  "C:/Users/anton/Desktop/Research/Paper_3/LatticeVision/R_data_generation/LKrig.sim.mercator.R"
-)
 
 ###########################################
 ######     Helper Functions          #####
 ###########################################
-# many of these functions are simply written
-# for plotting convenience
+
+# Simulation function for generating realizations of the SAR
+LKrig.sim <- function(x1, LKinfo, M = 1, just.coefficients = FALSE) {
+  Q <- LKrig.precision(LKinfo)
+  Qc <- chol(Q, memory = LKinfo$choleskyMemory)
+  m <- LKinfo$latticeInfo$m
+  E <- matrix(rnorm(M * m), nrow = m, ncol = M)
+  randomC <- backsolve(Qc, E)
+  if (just.coefficients) {
+    return(randomC)
+  } 
+  else {
+    PHI1 <- LKrig.basis(x1, LKinfo)
+    return(PHI1 %*% randomC)
+  }
+}	
+
+
+# LKrig function that creates the precision matrix
+# which requires the creation of the SAR matrix 
+LKrig.precision <- function(LKinfo, return.B = FALSE,
+                            verbose=FALSE) { 
+  L <- LKinfo$nlevel
+  offset <- LKinfo$latticeInfo$offset
+  # some checks on arguments
+  LKinfoCheck(LKinfo)
+  # ind holds non-zero indices and ra holds the values
+  ind <- NULL
+  ra <- NULL
+  da <- rep(0, 2)
+  # loop over levels
+  for (j in 1:L) {
+    # evaluate the SAR matrix at level j.
+    tempB<- LKrigSAR( LKinfo, Level=j)
+    if( verbose){
+      cat("dim indices in spind of B:",dim( tempB$ind) , fill=TRUE)            	
+    }
+    # accumulate the new block
+    # for the indices that are not zero
+    ra <- c(ra,tempB$ra )
+    ind <- rbind(ind, tempB$ind + offset[j])
+    # increment the dimensions
+    da[1] <- da[1] + tempB$da[1]
+    da[2] <- da[2] + tempB$da[2]
+  }
+  # dimensions of the full matrix
+  # should be da after loop
+  # check this against indices in LKinfo
+  #
+  if ((da[1] != offset[L + 1]) | (da[2] != offset[L + 
+                                                  1])) {
+    stop("Mismatch of dimension with size in LKinfo")
+  }
+  # convert to spind format:
+  # tempBtest <- list(ind = ind, ra = ra, da = da) 
+  # tempB<- spind2spam( tempBtest)
+  if( verbose){
+    cat("dim of ind (fullB):", dim( ind), fill=TRUE)
+  }
+  tempB <- spam( list( ind=ind, ra), nrow=da[1], ncol=da[2])
+  if( verbose){
+    cat("dim after spind to spam in precision:", dim( tempB), fill=TRUE)
+  }
+  if (return.B) {
+    return(tempB)
+  }
+  else {
+    # find precision matrix Q = t(B)%*%B and return
+    return(t(tempB) %*% (tempB))
+  }
+}
+
+
+# returns sparse SAR matrix which is used in the 
+# precision function, which is then called in the 
+# simulation function. here we ensure the B matrix
+# has periodic properties which allows us to 
+# respect the Mercator projection
+
+LKrigSAR <- function( object, Level, ...){ 
+  
+  mx1<-              object$latticeInfo$mx[Level,1]
+  mx2<-              object$latticeInfo$mx[Level,2]
+  m<- mx1*mx2
+  #
+  a.wght<- (object$a.wght)[[Level]]
+  
+  stationary <-     (attr( object$a.wght, "stationary"))[Level]
+  first.order<-     attr( object$a.wght, "first.order")[Level]
+  isotropic  <-     attr(object$a.wght, "isotropic")[Level]
+  distance.type <-  object$distance.type
+  if( all(stationary & isotropic) ) {
+    if( any(unlist(a.wght) < 4) ){
+      stop("a.wght less than 4")
+    }
+  }
+  
+  #  either  a.wght is a  matrix (rows index lattice locations)
+  #  or fill out matrix of this size with stationary values
+  dim.a.wght <- dim(a.wght)
+  
+  # figure out if just a single a.wght or matrix is passed
+  # OLD see above first.order <-  (( length(a.wght) == 1)|( length(dim.a.wght) == 2)) 
+  
+  # order of neighbors and center
+  index <- c(5, 4, 6, 2, 8, 3, 9, 1, 7)
+  # dimensions of precision matrix
+  da <- as.integer(c(m, m))
+  # contents of sparse matrix organized as a 2-dimensional array
+  # with the second dimension indexing the weights for center and four nearest neighbors.
+  if (first.order) {
+    ra <- array(NA, c(mx1*mx2, 5))
+    ra[,  1] <- a.wght
+    ra[,  2:5] <- -1
+  }
+  else {
+    ra <- array(NA, c(mx1 * mx2, 9))
+    for (kk in 1:9) {
+      # Note that correct filling happens both as a scalar or as an mx1 X mx2 matrix
+      if (stationary) {
+        ra[ , kk] <- a.wght[index[kk]]
+      }
+      else {
+        ra[ ,  kk] <- a.wght[ , index[kk]]
+      }
+    }
+  }
+  #
+  #  Order for 5 nonzero indices is: center, top, bottom, left right
+  #  a superset of indices is used to make the arrays regular.
+  #  and NAs are inserted for positions beyond lattice. e.g. top neighbor
+  #  for a lattice point on the top edge. The NA pattern is also
+  #  consistent with how the weight matrix is filled.
+  #
+  Bi <- rep(1:m, 5)
+  i.c <- matrix(1:m, nrow = mx1, ncol = mx2)
+  # indices for center, top, bottom, left, right or ... N, S, E, W
+  # NOTE that these are just shifts of the original matrix
+  Bj <- c(i.c,
+          LKrig.shift.matrix(i.c, 0, -1), # top 
+          LKrig.shift.matrix(i.c, 0,  1), #bottom
+          LKrig.shift.matrix(i.c, 1,  0, periodic = TRUE), #left (periodic here)
+          LKrig.shift.matrix(i.c, -1, 0, periodic = TRUE)  #right (periodic here)
+  )
+  # indices for NW, SW, SE, SW
+  if (!first.order) {
+    Bi <- c(Bi, rep(1:m, 4))
+    Bj <- c(Bj,
+            LKrig.shift.matrix(i.c,  1,  1, periodic = c(TRUE,TRUE)), # bottom left (periodic here)
+            LKrig.shift.matrix(i.c, -1,  1, periodic = c(TRUE,TRUE)), # bottom right (periodic here)
+            LKrig.shift.matrix(i.c,  1, -1, periodic = c(TRUE,TRUE)), # top left (periodic here)
+            LKrig.shift.matrix(i.c, -1, -1, periodic = c(TRUE,TRUE)) # top right (periodic here)
+            # LKrig.shift.matrix(i.c,  1,  1), # bottom left 
+            # LKrig.shift.matrix(i.c, -1,  1), # bottom right 
+            # LKrig.shift.matrix(i.c,  1, -1), # top left 
+            # LKrig.shift.matrix(i.c, -1, -1) # top right 
+    )
+  }
+  
+  # find all cases that are actually in lattice
+  good <- !is.na(Bj)
+  # remove cases that are beyond the lattice and coerce to integer
+  # also reshape ra as a vector stacking the 9 columns
+  #
+  Bi <- as.integer(Bi[good])
+  Bj <- as.integer(Bj[good])
+  ra <- c(ra)[good]
+  # return spind format because this is easier to accumulate
+  # matrices at different multiresolution levels
+  # see calling function LKrig.precision
+  #
+  # below is an add on hook to normalize the values to sum to 4 at boundaries
+  if(!is.null(object$setupArgs$BCHook)){
+    M<- da[1]
+    for( i in 1: M){
+      rowI<- which(Bi== i)
+      rowNN<- rowI[-1]
+      ra[rowNN]<-  4*ra[rowNN] / length(rowNN )
+    }
+    
+  }
+  return(list(ind = cbind(Bi, Bj), ra = ra, da = da))
+}
+
+
+
 # for making the SAR quickly 
 LKrigSARGaussian<- function(LKinfo,M,
                             asList=FALSE ){
@@ -1009,6 +956,27 @@ LKrigSARGaussian<- function(LKinfo,M,
 coastline <- function(x, coast_coef, coast_bump_scale, coast_freq) {
   return(coast_coef * x + coast_bump_scale * sin(2 * pi * coast_freq * x) 
          + 0.01 * rnorm(length(x)))
+}
+
+# read current dims of h5 data
+get_dims <- function() {
+  info  <- h5ls(file_name, all=TRUE)
+  row   <- subset(info, name==dataset_name & otype=="H5I_DATASET")
+  dims  <- as.integer(strsplit(row$dim, " x ")[[1]])
+  names(dims) <- c("nx","ny","nz")
+  dims
+}
+
+# predict constant values
+predict.constantValue<- function(object,x){
+  n<- length(object$values)
+  m<- nrow( x)
+  return( matrix( object$values, nrow=m, ncol=n, byrow=TRUE ) )
+}
+
+# predict functions for param grids 
+predict.surfaceGrid<- function(object,x){
+  interp.surface( object, x)
 }
 
 # predict function for non-stationary, anisotropic awght
@@ -1045,7 +1013,6 @@ generate_param_field <- function(
     param_high <- sample(high_awghts, 1)
     
     # these variables are dependent on the domain of the param (awght)
-    # changed quantities: (0.5, 0.1998)
     gauss_amps <- runif(2, 0.1, 0.5) * ifelse(param_constant <= midpoint, 1, -1)
     mult_factor <- runif(1, 0.001, 0.1998)
     
@@ -1059,418 +1026,7 @@ generate_param_field <- function(
     param_low <- runif(1, lower_bound, param_constant)
     param_high <- runif(1, param_constant, upper_bound)
     
-    # dependent on rho domain. changed quantities:  (1.5, 0.7498)
-    gauss_amps <- runif(2, 0.1, 1.5) * ifelse(param_constant <= midpoint, 1, -1) 
-    mult_factor <- runif(1, 0.001, 0.7498) 
-    
-  } else if (paramtype == "theta"){
-    # full range of correlation ellipses
-    lower_bound <- 0
-    upper_bound <- 3
-    midpoint <- (lower_bound + upper_bound) / 2  # 1.5 (roughly pi/2)
-    
-    param_constant <- runif(1, lower_bound, upper_bound)
-    param_low <- runif(1, lower_bound, param_constant)
-    param_high <- runif(1, param_constant, upper_bound)
-    
-    # dependent on theta domain. changed quantities: (pi/8, 0.4998)
-    gauss_amps <- runif(2, 0.1, pi/4) * ifelse(param_constant < midpoint, 1, -1) 
-    mult_factor <- runif(1, 0.001, 0.9998) 
-    
-  } else {
-    stop("Unknown paramtype. Please use either awght, rho, or theta.")
-  }
-  
-  # these quantities dont depend on which param field we are making
-  taper_sd <- runif(1, 0.05, 1)
-  
-  gauss_slopes <- runif(2, 0.2, 0.5)
-  # gauss locations need to be within [-1,1],[-1,1] domain
-  gauss_locs <- runif(4, sGrid[1], tail(sGrid,1)[1]) 
-  
-  coast_sharpnesses <- runif(2, 3, 50)
-  coast_bump_scales <- runif(2, 0.1, 0.5)
-  coast_freqs <- runif(2, 0.4, 3)
-  coast_coefs <- runif(2, -2 , 2)
-  # make sure that adding coastlines doesnt go out of bounds
-  coast_amp1 <- runif(1,0.1 , 0.9)
-  coast_amp2 <- runif(1, 0.1, 1-coast_amp1)
-  
-  # make sure sin amplitude doesnt go out of bounds
-  if (param_constant > midpoint){
-    sin_amp <- runif(1, 0, upper_bound - param_constant)
-  }
-  else{
-    sin_amp <- runif(1, 0, param_constant - lower_bound)
-  }
-  sin_freq <- runif(1, 1.5, 5)
-  sin_orientation <- "horiz" #sample(c("horiz","vert"),1)
-  
-  #number of basis for generating a gp for the param field. 
-  # a gp will then be generated from this gp. 
-  # inception vibes
-  num_basis_param <- sample(c(6:32), 1) 
-  
-  if (config == "constant"){
-    param_func <- rep(param_constant, n)
-  }
-  
-  else if (config == "taper"){
-    taper<- pnorm( sGrid[,1] + sGrid[,1],
-                   mean = 0, sd = taper_sd)
-    param_func<- param_low*taper +  param_high*(1-taper)
-  }
-  
-  else if (config == "Gaussian"){
-    param_func <- param_constant + 
-      gauss_amps[1] * exp(-((sGrid[,1]^2 + sGrid[,2]^2) / gauss_slopes[1])) 
-  }
-  
-  else if (config == "coastline"){
-    param_func <- param_low + (param_high - param_low) / 
-      (1 + exp(-coast_sharpnesses[1] * (sGrid[,2] - coastline(sGrid[,1], 
-                                                              coast_coefs[1],
-                                                              coast_bump_scales[1],
-                                                              coast_freqs[1]))))
-  }
-  
-  else if (config == "sinwave"){
-    if (sin_orientation == "vert"){
-      param_func <- param_constant + sin_amp * sin( pi * sGrid[,1] * sin_freq)
-    }
-    else{
-      param_func <- param_constant + sin_amp * cos( pi * sGrid[,2] * sin_freq)
-    }
-  }
-  
-  else if (config == "double_Gaussian"){
-    
-    peak1 <- gauss_amps[1] * exp(-((sGrid[,1] - gauss_locs[1])^2 + 
-                                     (sGrid[,2] - gauss_locs[2])^2) / gauss_slopes[1])
-    peak2 <- gauss_amps[2] * exp(-((sGrid[,1] + gauss_locs[3])^2 + 
-                                     (sGrid[,2] + gauss_locs[4])^2) / gauss_slopes[2])
-    param_func <- param_constant + peak1 + peak2
-  }
-  
-  else if (config == "double_coastline"){
-    coastline1 <- (param_high - param_low)/
-      (1 + exp(-coast_sharpnesses[1] * (sGrid[,2] - 
-                                          coastline(sGrid[,1], 
-                                                    coast_coefs[1], 
-                                                    coast_bump_scales[1],
-                                                    coast_freqs[1]))))
-    coastline2 <- (param_high - param_low)/
-      (1 + exp(-coast_sharpnesses[2] * (sGrid[,2] - 
-                                          coastline(sGrid[,1], 
-                                                    coast_coefs[2], 
-                                                    coast_bump_scales[2],
-                                                    coast_freqs[2]))))
-    param_func <- param_low + (coast_amp1 * coastline1) + (coast_amp2 * coastline2)
-  }
-  
-  else if (config == "GP_gp"){
-    # making param fields from GPs themselves!!
-    LKinfo_param <- LKrigSetup(sGrid, 
-                               NC = num_basis_param, 
-                               nlevel = 1, 
-                               a.wght = sample(awghts, 1),
-                               nu = 1, 
-                               normalize = FALSE)
-    
-    # faster way to simulate the field 
-    f_param <- LKrig.basis(sGrid, LKinfo_param) %*% LKrigSARGaussian(LKinfo_param, M = 1)
-    
-    
-    # minmax 0-1 scale the field
-    f_param <- (f_param - min(f_param))/(max(f_param) - min(f_param))
-    
-    #multiplying factor based on param domain bounds
-    if (param_constant < midpoint){
-      param_func <- ((f_param * mult_factor) + 1) * param_constant
-    }else{
-      param_func <- (1 - (f_param * mult_factor)) * param_constant
-    }
-  }
-  
-  # param_field <- as.surface( sGrid, param_func)$z
-  param_field <- matrix(param_func, nrow = rows, ncol = columns)
-  
-  return(param_field)
-}
-
-
-# function to plot model estimated params
-plot_params <- function(
-    kappa2,
-    theta, 
-    rho, 
-    border_lwd = 1
-){
-  awght <- kappa2 + 4
-  # sanity plotting for input and output params
-  par(mfrow = c(2,2), mar =   c(3.1, 4.1, 2.1, 2.1))
-  imagePlot(x = lon, y = lat, 
-            first_field_norm, main = "First Clim Field", col = turbo(256)) #, 
-  #horizontal = TRUE)
-  map("world2", add = TRUE, 
-      col = "grey0", lwd = border_lwd)
-  
-  imagePlot(x = lon, y = lat,
-            awght, main = "awght", col = viridis(256))
-  map("world2", add = TRUE, 
-      col = "grey90", lwd = border_lwd)
-  
-  imagePlot(x = lon, y = lat,
-            theta, main = "Theta", col = viridis(256))
-  map("world2", add = TRUE, 
-      col = "grey90", lwd = border_lwd)
-  
-  imagePlot(x = lon, y = lat,
-            rho, main = "Rho", col = viridis(256))
-  map("world2", add = TRUE, 
-      col = "grey90", lwd = border_lwd)
-  par(mfrow = c(1,1))
-}
-
-# function for plotting covariance surface with contours
-plot_cov_surface <- function(
-    LKinfo, 
-    real_field,
-    loc_x, 
-    loc_y, 
-    plotting = TRUE
-){
-  cov_surface <- LKrig.cov(sGrid, rbind(c(loc_x,loc_y)), LKinfo)
-  cov_surface <- matrix(cov_surface, nrow = rows, ncol = columns)
-  
-  if (plotting == TRUE){
-    par(mfrow = c(1,2), mar=  c(5.1, 4.1, 4.1, 2.1))
-    image.plot(as.surface(sGrid, cov_surface), col = viridis(256), 
-               main = "Correlation")
-    contour( as.surface( sGrid, cov_surface), col = "white", add = TRUE)
-    
-    imagePlot(as.surface(sGrid, real_field), 
-              main = "First Clim Field", col = turbo(256))
-    contour( as.surface( sGrid, cov_surface), col = "grey30", add = TRUE)
-    par(mfrow = c(1,1))
-  }
-  
-  return (cov_surface)
-}
-
-
-
-# MAIN GENERATION FUNCTION
-# takes in the estimated parameters and creates synthetic fields
-generate_synthetic_reps <- function(
-    kappa2, 
-    theta, 
-    rho,
-    rhox,
-    rhoy,
-    n_replicates = 30,
-    random_seed = 777,
-    smooth_choice = FALSE,
-    normalize = TRUE
-){
-  
-  # create H tensor out of params
-  H11 <- ( rhox^2 * (cos(theta))^2) + ( rhoy^2 * (sin(theta))^2 ) 
-  H12 <- (rhoy^2 - rhox^2)*(sin(theta)*cos(theta))
-  H21 <- H12 
-  H22 <- (rhox^2 * (sin(theta))^2) + (rhoy^2 * (cos(theta))^2)
-  
-  # fill the high dimensional stencil (9 fields)
-  stencil_tensor <- array( NA, c( rows,columns,9))
-  stencil_tensor[,,1] <- 0.5 * H12
-  stencil_tensor[,,2] <- -H22
-  stencil_tensor[,,3] <- -0.5 * H12
-  stencil_tensor[,,4] <- -H11
-  stencil_tensor[,,5] <- kappa2 + 2 * H11 + 2 * H22
-  stencil_tensor[,,6] <- -H11
-  stencil_tensor[,,7] <- -0.5 * H12
-  stencil_tensor[,,8] <- -H22
-  stencil_tensor[,,9] <- 0.5 * H12
-  
-  # put everything into awght obj of a particular class
-  awght_obj <- list( x= gridList$x,  y= gridList$y, z=stencil_tensor )
-  class( awght_obj)<- "multivariateSurfaceGrid"
-  
-  #setup an LKinfo object for generating fields 
-  set.seed(random_seed)
-  LKinfo <- LKrigSetup(sGrid, NC =rows,
-                       nlevel = 1, 
-                       a.wghtObject =  awght_obj, 
-                       normalize=FALSE, 
-                       NC.buffer = 0, overlap = 2.5, nu = 1) 
-  
-  
-  # generate fields
-  gen_time <- system.time(
-    f <- LKrig.sim( sGrid, LKinfo, M = n_replicates, just.coefficients = smooth_choice)
-  )
-  
-  # normalize the fields 
-  if (normalize == TRUE){
-    mu <- rowMeans(f)
-    sd <- apply(f, 1, sd) 
-    f <- (f - mu)/sd
-  }
-  
-  # SAVE 
-  object <- list()
-  object$gen_time <- gen_time
-  object$LKinfo <- LKinfo
-  object$f <- f
-  object$mu <- mu
-  object$sd <- sd
-  
-  return (object)
-}
-
-
-# plots the real and simulated fields side by side 
-plot_real_sim <- function(
-    real_field, 
-    simulated_field,
-    border_lwd = 1
-){
-  # plot the real field and simulated field
-  par(mfrow = c(1,2), mar=  c(5.1, 4.1, 4.1, 2.1))
-  imagePlot(x = lon, y = lat,
-            real_field, main = "", col = turbo(256)) #Clim Field
-  map("world2", add = TRUE, 
-      col = "grey30", lwd = border_lwd)
-  
-  image.plot(x = lon, y = lat,
-             simulated_field, col = turbo(256), main = "") #Simulated field
-  map("world2", add = TRUE, 
-      col = "grey30", lwd = border_lwd)
-  par(mfrow = c(1,1))
-}
-
-# function for centering plots in the pacific
-pacific_centering <- function(fields){
-  if (length(dim(fields)) == 3){
-    fields <- fields[c((rows/2+1):rows,1:(rows/2)),,]
-  }
-  else if (length(dim(fields)) == 2){
-    fields <- fields[c((rows/2+1):rows,1:(rows/2)),]
-  }
-  else {
-    stop("Input must be a 2D or 3D array")
-  }
-}
-
-``````{ end_of_file="R_data_generation/helper_funcs.R" }
-
-``````{ path="R_data_generation/stun_datasim_clim_aniso.R"  }
-library(LatticeKrig)
-library(spam64)
-library(tictoc)
-library(rhdf5)
-
-rm(list=ls())
-setwd("C:/Users/anton/Desktop/Research/Paper_3/LatticeVision")
-
-
-###########################################
-###### Helper Functions ######
-###########################################
-
-# for making the SAR quickly 
-LKrigSARGaussian<- function(LKinfo,M,
-                            asList=FALSE ){
-  coefSAR<- NULL
-  nLevel<- LKinfo$nlevel
-  for( K in 1:nLevel){
-    B <- LKrigSAR(LKinfo,Level=K)
-    B<- spind2spam(B) # convert to spam format 
-    mLevel<- LKinfo$latticeInfo$mLevel[K]
-    # here using Gaussian but can change to other distribution 
-    U<- runif(mLevel*M )
-    E<-  qnorm(U)
-    E<- matrix(E, mLevel, M)
-    #
-    y<- as.matrix(solve(B, E)) # uses sparse methods
-    if(!asList){
-      coefSAR<- rbind(coefSAR, y)
-    }
-    else{ coefSAR<- c( coefSAR, list(y))}
-  }
-  return( coefSAR)
-}
-
-
-# predict functions for param grids 
-predict.surfaceGrid<- function(object,x){
-  interp.surface( object, x)
-}
-
-predict.multivariateSurfaceGrid<- function(object,x){
-  dimZ<- dim( object$z)
-  L<- dimZ[3]
-  out<- matrix( NA, nrow= nrow(x), ncol=L)
-  for (  l in 1:L){
-    out[,l]<- interp.surface( 
-      list( x=object$x,y=object$y, z=object$z[,,l]) , x)
-  }
-  return( out)
-}
-
-predict.constantValue<- function(object,x){
-  n<- length(object$values)
-  m<- nrow( x)
-  return( matrix( object$values, nrow=m, ncol=n, byrow=TRUE ) )
-}
-
-
-# function for defining fun coastline-like surfaces
-coastline <- function(x, coast_coef, coast_bump_scale, coast_freq) {
-  return(coast_coef * x + coast_bump_scale * sin(2 * pi * coast_freq * x) 
-         + 0.01 * rnorm(length(x)))
-}
-
-
-###########################################
-###### Param Field Generator ######
-###########################################
-
-generate_param_field <- function(
-    paramtype, 
-    config, 
-    sGrid, 
-    rows, 
-    columns,
-    n){
-  
-  if (paramtype == "awght"){
-    # sampling from predetermined awghts 
-    # (this can be changed, just a design choice)
-    lower_bound <- min(awghts)
-    upper_bound <- max(awghts)
-    midpoint <- (lower_bound + upper_bound)/2 # 5
-    
-    param_constant <- sample(awghts, 1)
-    param_low <- sample(low_awghts, 1)
-    param_high <- sample(high_awghts, 1)
-    
-    # these variables are dependent on the domain of the param (awght)
-    # changed quantities: (0.5, 0.1998)
-    gauss_amps <- runif(2, 0.1, 0.5) * ifelse(param_constant <= midpoint, 1, -1)
-    mult_factor <- runif(1, 0.001, 0.1998)
-    
-  } else if (paramtype == "rho"){
-    # rho is constructed simply based on bounds
-    lower_bound <- 1
-    upper_bound <- 7
-    midpoint <- (lower_bound + upper_bound) / 2  # 4
-    
-    param_constant <- runif(1, lower_bound, upper_bound)
-    param_low <- runif(1, lower_bound, param_constant)
-    param_high <- runif(1, param_constant, upper_bound)
-    
-    # dependent on rho domain. changed quantities:  (1.5, 0.7498)
+    # dependent on rho domain
     gauss_amps <- runif(2, 0.1, 1.5) * ifelse(param_constant <= midpoint, 1, -1) 
     mult_factor <- runif(1, 0.001, 0.7498)  
     
@@ -1484,7 +1040,7 @@ generate_param_field <- function(
     param_low <- runif(1, lower_bound, param_constant)
     param_high <- runif(1, param_constant, upper_bound)
     
-    # dependent on theta domain. changed quantities: (pi/8, 0.4998)
+    # dependent on theta domain
     gauss_amps <- runif(2, 0.1, pi/4) * ifelse(param_constant < midpoint, 1, -1) 
     mult_factor <- runif(1, 0.001, 0.9998) 
     
@@ -1519,7 +1075,7 @@ generate_param_field <- function(
   
   #number of basis for generating a gp for the param field. 
   # a gp will then be generated from this gp. 
-  # inception vibes
+  #Just like inception...
   num_basis_param <- sample(c(6:32), 1) 
   
   if (config == "constant"){
@@ -1596,14 +1152,14 @@ generate_param_field <- function(
       LKrigSARGaussian(LKinfo_param, M = 1)
     
     if (scale_choice == "minmax") {
-      # -- full min/max rescale to [lower_bound, upper_bound] --
+      # full min/max rescale to [lower_bound, upper_bound]
       f_min    <- min(f_param)
       f_max    <- max(f_param)
       f_norm   <- (f_param - f_min) / (f_max - f_min)
       param_func <- f_norm * (upper_bound - lower_bound) + lower_bound
       
     } else {
-      # -- old “small perturbation around param_constant” technique --
+      # old small perturbation around param_constant technique 
       f_param <- (f_param - min(f_param)) / (max(f_param) - min(f_param))
       if (param_constant < midpoint) {
         param_func <- ((f_param * mult_factor) + 1) * param_constant
@@ -1618,11 +1174,387 @@ generate_param_field <- function(
   return(param_field)
 }
 
+
+# function to plot model estimated params
+plot_params <- function(
+    kappa2,
+    theta, 
+    rho, 
+    border_lwd = 1
+){
+  awght <- kappa2 + 4
+  # sanity plotting for input and output params
+  par(mfrow = c(2,2), mar =   c(3.1, 4.1, 2.1, 2.1))
+  imagePlot(x = lon, y = lat, 
+            first_field_norm, main = "First Clim Field", col = turbo(256)) #, 
+  #horizontal = TRUE)
+  map("world2", add = TRUE, 
+      col = "grey0", lwd = border_lwd)
+  
+  imagePlot(x = lon, y = lat,
+            awght, main = "awght", col = viridis(256))
+  map("world2", add = TRUE, 
+      col = "grey90", lwd = border_lwd)
+  
+  imagePlot(x = lon, y = lat,
+            theta, main = "Theta", col = viridis(256))
+  map("world2", add = TRUE, 
+      col = "grey90", lwd = border_lwd)
+  
+  imagePlot(x = lon, y = lat,
+            rho, main = "Rho", col = viridis(256))
+  map("world2", add = TRUE, 
+      col = "grey90", lwd = border_lwd)
+  par(mfrow = c(1,1))
+}
+
+# function for plotting covariance surface with contours
+plot_cov_surface <- function(
+    LKinfo, 
+    real_field,
+    loc_x, 
+    loc_y, 
+    plotting = TRUE
+){
+  cov_surface <- LKrig.cov(sGrid, rbind(c(loc_x,loc_y)), LKinfo)
+  cov_surface <- matrix(cov_surface, nrow = rows, ncol = columns)
+  
+  if (plotting == TRUE){
+    par(mfrow = c(1,2), mar=  c(5.1, 4.1, 4.1, 2.1))
+    image.plot(as.surface(sGrid, cov_surface), col = viridis(256), 
+               main = "Correlation")
+    contour( as.surface( sGrid, cov_surface), col = "white", add = TRUE)
+    
+    imagePlot(as.surface(sGrid, real_field), 
+              main = "First Clim Field", col = turbo(256))
+    contour( as.surface( sGrid, cov_surface), col = "grey30", add = TRUE)
+    par(mfrow = c(1,1))
+  }
+  
+  return (cov_surface)
+}
+
+
+# plots the real and simulated fields side by side 
+plot_real_sim <- function(
+    real_field, 
+    simulated_field,
+    border_lwd = 1
+){
+  # plot the real field and simulated field
+  par(mfrow = c(1,2), mar=  c(5.1, 4.1, 4.1, 2.1))
+  imagePlot(x = lon, y = lat,
+            real_field, main = "", col = turbo(256)) #Clim Field
+  map("world2", add = TRUE, 
+      col = "grey30", lwd = border_lwd)
+  
+  image.plot(x = lon, y = lat,
+             simulated_field, col = turbo(256), main = "") #Simulated field
+  map("world2", add = TRUE, 
+      col = "grey30", lwd = border_lwd)
+  par(mfrow = c(1,1))
+}
+
+# function for centering plots in the pacific
+pacific_centering <- function(fields){
+  if (length(dim(fields)) == 3){
+    fields <- fields[c((rows/2+1):rows,1:(rows/2)),,]
+  }
+  else if (length(dim(fields)) == 2){
+    fields <- fields[c((rows/2+1):rows,1:(rows/2)),]
+  }
+  else {
+    stop("Input must be a 2D or 3D array")
+  }
+}
+
+# MAIN GENERATION FUNCTION
+# takes in the estimated parameters and creates synthetic fields
+generate_synthetic_reps <- function(
+    kappa2, 
+    theta, 
+    rho,
+    rhox,
+    rhoy,
+    n_replicates = 30,
+    random_seed = 777,
+    smooth_choice = FALSE,
+    normalize = TRUE
+){
+  
+  # create H tensor out of params
+  H11 <- ( rhox^2 * (cos(theta))^2) + ( rhoy^2 * (sin(theta))^2 ) 
+  H12 <- (rhoy^2 - rhox^2)*(sin(theta)*cos(theta))
+  H21 <- H12 
+  H22 <- (rhox^2 * (sin(theta))^2) + (rhoy^2 * (cos(theta))^2)
+  
+  # fill the high dimensional stencil (9 fields)
+  stencil_tensor <- array( NA, c( rows,columns,9))
+  stencil_tensor[,,1] <- 0.5 * H12
+  stencil_tensor[,,2] <- -H22
+  stencil_tensor[,,3] <- -0.5 * H12
+  stencil_tensor[,,4] <- -H11
+  stencil_tensor[,,5] <- kappa2 + 2 * H11 + 2 * H22
+  stencil_tensor[,,6] <- -H11
+  stencil_tensor[,,7] <- -0.5 * H12
+  stencil_tensor[,,8] <- -H22
+  stencil_tensor[,,9] <- 0.5 * H12
+  
+  # put everything into awght obj of a particular class
+  awght_obj <- list( x= gridList$x,  y= gridList$y, z=stencil_tensor )
+  class( awght_obj)<- "multivariateSurfaceGrid"
+  
+  #setup an LKinfo object for generating fields 
+  set.seed(random_seed)
+  LKinfo <- LKrigSetup(sGrid, NC =rows,
+                       nlevel = 1, 
+                       a.wghtObject =  awght_obj, 
+                       normalize=FALSE, 
+                       NC.buffer = 0, overlap = 2.5, nu = 1) 
+  
+  
+  # generate fields
+  gen_time <- system.time(
+    f <- LKrig.sim( sGrid, LKinfo, M = n_replicates, just.coefficients = smooth_choice)
+  )
+  
+  # normalize the fields 
+  if (normalize == TRUE){
+    mu <- rowMeans(f)
+    sd <- apply(f, 1, sd) 
+    f <- (f - mu)/sd
+  }
+  
+  # SAVE 
+  object <- list()
+  object$gen_time <- gen_time
+  object$LKinfo <- LKinfo
+  object$f <- f
+  object$mu <- mu
+  object$sd <- sd
+  
+  return (object)
+}
+
+``````{ end_of_file="R_scripts/helper_funcs.R" }
+
+``````{ path="R_scripts/i2i_datagen.R"  }
+##########             IMPORTANT              ###########
+#-------------------------------------------------------#
+# Navigate to "Session" in the top left of RStudio and
+# click on "Set Working Directory" and then 
+# choose "To Source File Location". 
+# Now you can run the script. 
+#-------------------------------------------------------#
+
+library(LatticeKrig)
+library(spam64)
+library(tictoc)
+library(rhdf5)
+library(here)
+# helper functions
+source(here("R_scripts", "helper_funcs.R"))
+
+
+# Some choices to make: 
+# total number of simulated fields 
+total_sims <- 8000
+# chunks the data will be created in (RAM constraints), 1000 is about 16 GB
+chunk_size <- 1000
+# Other options can be tweaked in the
+# "Experimental Setup and Hyperparameters" section below. 
+
+
 ###########################################
-###### Full Data Generator ######
+######     Param Field Generator     ######
 ###########################################
 
-generate_stun_data <- function(
+generate_param_field <- function(
+    paramtype,
+    config,
+    sGrid,
+    rows,
+    columns,
+    n){
+
+  if (paramtype == "awght"){
+    # sampling from predetermined awghts
+    # (this can be changed, just a design choice)
+    lower_bound <- min(awghts)
+    upper_bound <- max(awghts)
+    midpoint <- (lower_bound + upper_bound)/2 # 5
+
+    param_constant <- sample(awghts, 1)
+    param_low <- sample(low_awghts, 1)
+    param_high <- sample(high_awghts, 1)
+
+    # these variables are dependent on the domain of the param (awght)
+    gauss_amps <- runif(2, 0.1, 0.5) * ifelse(param_constant <= midpoint, 1, -1)
+    mult_factor <- runif(1, 0.001, 0.1998)
+
+  } else if (paramtype == "rho"){
+    # rho is constructed simply based on bounds
+    lower_bound <- 1
+    upper_bound <- 7
+    midpoint <- (lower_bound + upper_bound) / 2  # 4
+
+    param_constant <- runif(1, lower_bound, upper_bound)
+    param_low <- runif(1, lower_bound, param_constant)
+    param_high <- runif(1, param_constant, upper_bound)
+
+    # dependent on rho domain
+    gauss_amps <- runif(2, 0.1, 1.5) * ifelse(param_constant <= midpoint, 1, -1)
+    mult_factor <- runif(1, 0.001, 0.7498)
+
+  } else if (paramtype == "theta"){
+    # making sure to obtain all possible ellipses
+    lower_bound <- 0
+    upper_bound <- 3
+    midpoint <- (lower_bound + upper_bound) / 2  # 1.5 (roughly pi/2)
+
+    param_constant <- runif(1, lower_bound, upper_bound)
+    param_low <- runif(1, lower_bound, param_constant)
+    param_high <- runif(1, param_constant, upper_bound)
+
+    # dependent on theta domain
+    gauss_amps <- runif(2, 0.1, pi/4) * ifelse(param_constant < midpoint, 1, -1)
+    mult_factor <- runif(1, 0.001, 0.9998)
+
+  } else {
+    stop("Unknown paramtype. Please use either awght, rho, or theta.")
+  }
+
+  # these quantities dont depend on which param field we are making
+  taper_sd <- runif(1, 0.05, 1)
+
+  gauss_slopes <- runif(2, 0.2, 0.5)
+  # gauss locations need to be within [-1,1],[-1,1] domain
+  gauss_locs <- runif(4, sGrid[1], tail(sGrid,1)[1])
+
+  coast_sharpnesses <- runif(2, 3, 50)
+  coast_bump_scales <- runif(2, 0.1, 0.5)
+  coast_freqs <- runif(2, 0.4, 3)
+  coast_coefs <- runif(2, -2 , 2)
+  # make sure that adding coastlines doesnt go out of bounds
+  coast_amp1 <- runif(1,0.1 , 0.9)
+  coast_amp2 <- runif(1, 0.1, 1-coast_amp1)
+
+  # make sure sin amplitude doesnt go out of bounds
+  if (param_constant > midpoint){
+    sin_amp <- runif(1, 0, upper_bound - param_constant)
+  }
+  else{
+    sin_amp <- runif(1, 0, param_constant - lower_bound)
+  }
+  sin_freq <- runif(1, 1.5, 5)
+  sin_orientation <- sample(c("horiz","vert"),1)
+
+  #number of basis for generating a gp for the param field.
+  # a gp will then be generated from this gp.
+  #Just like inception...
+  num_basis_param <- sample(c(6:32), 1)
+
+  if (config == "constant"){
+    param_func <- rep(param_constant, n)
+  }
+
+  else if (config == "taper"){
+    taper<- pnorm( sGrid[,1] + sGrid[,1],
+                   mean = 0, sd = taper_sd)
+    param_func<- param_low*taper +  param_high*(1-taper)
+  }
+
+  else if (config == "Gaussian"){
+    param_func <- param_constant +
+      gauss_amps[1] * exp(-((sGrid[,1]^2 + sGrid[,2]^2) / gauss_slopes[1]))
+  }
+
+  else if (config == "coastline"){
+    param_func <- param_low + (param_high - param_low) /
+      (1 + exp(-coast_sharpnesses[1] * (sGrid[,2] - coastline(sGrid[,1],
+                                                              coast_coefs[1],
+                                                              coast_bump_scales[1],
+                                                              coast_freqs[1]))))
+  }
+
+  else if (config == "sinwave"){
+    if (sin_orientation == "vert"){
+      param_func <- param_constant + sin_amp * sin( pi * sGrid[,1] * sin_freq)
+    }
+    else{
+      param_func <- param_constant + sin_amp * cos( pi * sGrid[,2] * sin_freq)
+    }
+  }
+
+  else if (config == "double_Gaussian"){
+
+    peak1 <- gauss_amps[1] * exp(-((sGrid[,1] - gauss_locs[1])^2 +
+                                     (sGrid[,2] - gauss_locs[2])^2) / gauss_slopes[1])
+    peak2 <- gauss_amps[2] * exp(-((sGrid[,1] + gauss_locs[3])^2 +
+                                     (sGrid[,2] + gauss_locs[4])^2) / gauss_slopes[2])
+    param_func <- param_constant + peak1 + peak2
+  }
+
+  else if (config == "double_coastline"){
+    coastline1 <- (param_high - param_low)/
+      (1 + exp(-coast_sharpnesses[1] * (sGrid[,2] -
+                                          coastline(sGrid[,1],
+                                                    coast_coefs[1],
+                                                    coast_bump_scales[1],
+                                                    coast_freqs[1]))))
+    coastline2 <- (param_high - param_low)/
+      (1 + exp(-coast_sharpnesses[2] * (sGrid[,2] -
+                                          coastline(sGrid[,1],
+                                                    coast_coefs[2],
+                                                    coast_bump_scales[2],
+                                                    coast_freqs[2]))))
+    param_func <- param_low + (coast_amp1 * coastline1) + (coast_amp2 * coastline2)
+  }
+
+  else if (config == "GP_gp") {
+    # pick scaling strategy half the time
+    scale_choice <- sample(c("minmax","perturb"), size = 1, prob = c(0.5,0.5))
+
+    # simulate the little GP
+    LKinfo_param <- LKrigSetup(
+      sGrid,
+      NC        = num_basis_param,
+      nlevel    = 1,
+      a.wght    = sample(awghts, 1),
+      nu        = 1,
+      normalize = FALSE
+    )
+    f_param <- LKrig.basis(sGrid, LKinfo_param) %*%
+      LKrigSARGaussian(LKinfo_param, M = 1)
+
+    if (scale_choice == "minmax") {
+      # full min/max rescale to [lower_bound, upper_bound]
+      f_min    <- min(f_param)
+      f_max    <- max(f_param)
+      f_norm   <- (f_param - f_min) / (f_max - f_min)
+      param_func <- f_norm * (upper_bound - lower_bound) + lower_bound
+
+    } else {
+      # old small perturbation around param_constant technique
+      f_param <- (f_param - min(f_param)) / (max(f_param) - min(f_param))
+      if (param_constant < midpoint) {
+        param_func <- ((f_param * mult_factor) + 1) * param_constant
+      } else {
+        param_func <- (1 - (f_param * mult_factor)) * param_constant
+      }
+    }
+  }
+
+  # finally, reshape back to a matrix and return
+  param_field <- matrix(param_func, nrow = rows, ncol = columns)
+  return(param_field)
+}
+
+###########################################
+######      Full Data Generator      ######
+###########################################
+
+generate_i2i_data <- function(
     N_SIMS, 
     n_replicates = 30, 
     n_buffer = 10,
@@ -1684,7 +1616,7 @@ generate_stun_data <- function(
         rm(kappa2_pt1, kappa2_pt2)
       }
       
-      # theta field (stacking option)
+      # theta field (with stacking option)
       stack_choice_th <- sample(c("yes", "no"), 1)
       if (stack_choice_th == "no") {
         theta      <- generate_param_field(
@@ -1705,7 +1637,7 @@ generate_stun_data <- function(
         rm(theta_pt1, theta_pt2)
       }
       
-      # rho field (stacking option)
+      # rho field (with stacking option)
       stack_choice_r <- sample(c("yes", "no"), 1)
       if (stack_choice_r == "no") {
         rho        <- generate_param_field(
@@ -1729,7 +1661,6 @@ generate_stun_data <- function(
       # derive rhox and rhoy 
       rhox <- sqrt(rho)
       rhoy <- 1 / rhox
-      # rhoy <- sqrt(2 - rhox^2)
       
       if (sanity_plotting == TRUE){
         par(mfrow = c(2,2))
@@ -1741,7 +1672,7 @@ generate_stun_data <- function(
       }
       
       # populate the H tensor (4 fields)
-      # in the case of a constant stencil, this acts as a 2x2 diffusion matrix
+      # in the case of a constant stencil, this acts as a 2x2 dispersion matrix
       H11 <- ( rhox^2 * (cos(theta))^2) + ( rhoy^2 * (sin(theta))^2 ) 
       H12 <- (rhoy^2 - rhox^2)*(sin(theta)*cos(theta))
       H21 <- H12 
@@ -1763,7 +1694,7 @@ generate_stun_data <- function(
       awght_obj <- list( x= gridList$x,  y= gridList$y, z=stencil_tensor )
       class( awght_obj)<- "multivariateSurfaceGrid"
       
-      # remove from memory
+      # remove from memory for space
       rm(H11, H12, H21, H22, stencil_tensor)
       
       if (sanity_plotting == TRUE){
@@ -1786,9 +1717,7 @@ generate_stun_data <- function(
                            NC.buffer = 0, overlap = 2.5) 
       #NOTE: 
       # overlap can be set to anything between 0.001 and 1, it will be same (SAR)
-      # once u get above 1 (like 1.001) you start to get basis func smoothing 
-      # u can test this by printing values of f below
-      #print(f[1:20,1])
+      # once u get above 1 (like 1.001) you start to get basis function smoothing 
       # Although this does not matter for us here, as we will not use basis functions
       # we choose to operate with only the coefficients, which is why we select the 
       # just.coefficients = TRUE option below. This is equivalent to just a SAR!
@@ -1862,7 +1791,6 @@ generate_stun_data <- function(
       kappa2 <- c(kappa2)
       theta <- c(theta)
       rho <- c(rhox^2)
-      # rhox <- c(rhox)
       
       # combine all into one array 
       # we don't save rhoy or rhox, they come from rho
@@ -1890,17 +1818,20 @@ configs <- c("constant", "taper", "Gaussian", "Gaussian",
              "double_Gaussian", "double_coastline","double_coastline",
              "GP_gp", "GP_gp", "GP_gp", "GP_gp")
 
+# Many different options for awght prior
+
 # n_awghts <- 400
 # awghts <- 4 + exp(seq(log(0.0001),
 #                       log(2),
 #                       length.out=n_awghts))
-
-
-n_awghts_log <- 600 #100
-n_awght_unif <- 400 #900
-n_awghts <- n_awghts_log + n_awght_unif
 # awghts <- 4 + seq(sqrt(0.001), sqrt(2), length.out=n_awghts)^2
 # awghts <- 4 + seq(0.0001, 2, length.out=n_awghts)
+
+# Current awght prior
+n_awghts_log <- 600      #100
+n_awght_unif <- 400      #900
+n_awghts <- n_awghts_log + n_awght_unif
+
 awghts_log <- 4 + exp(seq(log(0.0001),
                           log(2),
                           length.out=n_awghts_log))
@@ -1929,8 +1860,6 @@ n_buffer <- 10
 random_seed <- 777
 
 n_replicates <- 30
-N_SIMS <- 1000
-DATA_LENGTH <- N_SIMS * (n_replicates + 3)
 verbose <- FALSE 
 sanity_plotting <- FALSE
 
@@ -1940,132 +1869,129 @@ sanity_plotting <- FALSE
 ########## Simulation and Saving ##########
 ###########################################
 
-dataset <- generate_stun_data(
-  N_SIMS = N_SIMS, 
-  n_replicates = n_replicates, 
-  n_buffer = n_buffer,
-  random_seed = random_seed, 
-  configs = configs,
-  awghts = awghts, 
-  low_awghts = low_awghts, 
-  high_awghts = high_awghts,
-  rows = rows,
-  columns = columns,
-  verbose = verbose, 
-  sanity_plotting = sanity_plotting
-)
-
-
-# creating the initial dataset (only run the first time)
-########################################################
-
-file_name <- "data/STUN_data.h5"
-# file_name <- "data/test_data.h5"
-dataset_name <- "fields"
-
-# dataset properties 
 nx <- rows * columns
 ny <- n_replicates + 3
-nz <- N_SIMS
 
-h5createFile(file_name)
-
-h5createDataset(
-  file = file_name, 
-  dataset = dataset_name,
-  dims = c(nx,ny,nz),
-  maxdims = c(nx,ny, H5Sunlimited()),
-  level = 9, 
-  shuffle = FALSE
-)
-# writing to it for the first time
-write_time <- system.time(
-  h5write(
-    obj = dataset,
-    file = file_name, 
-    name = dataset_name, 
-    index = list(1:nx, 1:ny, 1:nz)
-  )
-)
-print(paste("Writing data to h5 took ", write_time[[3]]/60," minutes."))
-# remember to close it
-h5closeAll()
-
-
-
-# adding to the dataset (run this after the initial dataset is created)
-######################################################################
-
-# get the current number of sims (last number in dimensions)
-file_name <- "data/STUN_data.h5"
+file_name <- here("data", "I2I_data.h5")
+# file_name <- here("data", "I2I_sample_data.h5")
 dataset_name <- "fields"
-print(h5ls(file_name))
 
-# put it in this variable (could string parse this later)
-# make sure to change this to the past size
-# ex: if you just ran the script for the first time and made a 1000 fields
-# when you run it again change this to 1000 so it adds to the h5 properly
-nz_old <- 8000 
-#rest of variables
-nx <- rows*columns
-ny <- n_replicates + 3
-nz_new <- N_SIMS
-nz <- nz_old + nz_new
-
-#extend the dataset
-h5set_extent(file_name, dataset_name, c(nx, ny, nz))
-
-write_time <- system.time(
-  h5write(
-    obj = dataset,
-    file = file_name, 
-    name = dataset_name, 
-    index = list(1:nx, 1:ny, (nz_old+1):nz)
+# create the file if it does not yet exist 
+if (!file.exists(file_name)) {
+  h5createFile(file_name)
+  h5createDataset(
+    file    = file_name,
+    dataset = dataset_name,
+    dims    = c(nx, ny, 0),              
+    maxdims = c(nx, ny, H5Sunlimited()), 
+    level   = 9,
+    shuffle = FALSE
   )
-)
-print(paste("Writing data to h5 took ", write_time[[3]]/60," minutes."))
-#remember to close it 
-h5closeAll()
+}
+
+for (start in seq(1, total_sims, by = chunk_size)) {
+  this_chunk <- min(chunk_size, total_sims - start + 1)
+  
+  # Generate the data chunk
+  generate_time <- system.time(
+    dataset <- generate_i2i_data(
+      N_SIMS = this_chunk, 
+      n_replicates = n_replicates, 
+      n_buffer = n_buffer,
+      random_seed = random_seed, 
+      configs = configs,
+      awghts = awghts, 
+      low_awghts = low_awghts, 
+      high_awghts = high_awghts,
+      rows = rows,
+      columns = columns,
+      verbose = verbose, 
+      sanity_plotting = sanity_plotting
+    )
+  )
+  
+  print(paste("Generating data chunk took ", generate_time[[3]]/60," minutes."))
+  
+  dims <- get_dims()
+  nz_old <- dims["nz"]
+  nz_new <- this_chunk
+  
+  h5set_extent(
+    file = file_name,
+    dataset = dataset_name,
+    dims = c(dims["nx"], dims["ny"], nz_old + nz_new)
+  )
+  
+  write_time <- system.time(
+    h5write(
+      obj = dataset,
+      file = file_name, 
+      name = dataset_name, 
+      index = list(1:nx, 1:ny, (nz_old + 1):(nz_old + nz_new))
+    )
+  )
+  print(paste("Writing data chunk to h5 took ", write_time[[3]]/60," minutes."))
+  h5closeAll()
+  
+  # for memory purposes 
+  rm(dataset)
+}
+
 
 ###########################################
 ### Loading in Subset of Data (Sanity) ####
 ###########################################
+# 
+# file_name <- here("data", "I2I_data.h5")
+# dataset_name <- "fields"
+# 
+# print(h5ls(file_name))
+# 
+# rows <- 288
+# columns <- 192
+# nx <- rows * columns
+# ny <- 33
+# #choose how many simulations
+# nz <- 4
+# 
+# subset_data <- h5read(file_name, dataset_name, index = list(1:nx, 1:ny, 1:nz))
+# print(dim(subset_data))
+# 
+# 
+# gridList<- list( x= seq( 1,rows,length.out= rows),
+#                  y= seq( 1,columns,length.out= columns) )
+# sGrid<- make.surface.grid(gridList)
+# 
+# 
+# for (i in 1:4){
+#   k = i
+# par(mfrow = c(2,3))
+# for (i in c(1,30,31,32,33)){
+#   if (i == 1 || i == 30){
+#     image.plot(as.surface(sGrid, subset_data[,i,k]), col = turbo(256) )
+#   } else {
+#     image.plot(as.surface(sGrid, subset_data[,i,k]), col = viridis(256))
+#   }
+# }
+# par(mfrow = c(1,1))
+# }
+``````{ end_of_file="R_scripts/i2i_datagen.R" }
 
-file_name <- "data/STUN_data.h5"
-dataset_name <- "fields"
-
-print(h5ls(file_name))
-
-rows <- 288
-columns <- 192
-nx <- rows * columns
-ny <- 33
-#choose how many simulations
-nz <- 20
-
-subset_data <- h5read(file_name, dataset_name, index = list(1:nx, 1:ny, 1:nz))
-print(dim(subset_data))
-
-
-gridList<- list( x= seq( 1,rows,length.out= rows),
-                 y= seq( 1,columns,length.out= columns) )
-sGrid<- make.surface.grid(gridList)
-
-
-for (i in 1:20){
-  k = i
-par(mfrow = c(2,3))
-for (i in c(1,30,31,32,33)){
-  if (i == 1 || i == 30){
-    image.plot(as.surface(sGrid, subset_data[,i,k]), col = turbo(256) )
-  } else {
-    image.plot(as.surface(sGrid, subset_data[,i,k]), col = viridis(256))
-  }
-}
-par(mfrow = c(1,1))
-}
-
-``````{ end_of_file="R_data_generation/stun_datasim_clim_aniso.R" }
+``````{ path="R_scripts/required_packages.R"  }
+install.packages("LatticeKrig")
+install.packages("spam64")
+install.packages("tictoc")
+install.packages("maps")
+install.packages("cmocean")
+install.packages("here")
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(
+  "rhdf5",
+  ask    = FALSE,    
+  update = FALSE 
+)
+``````{ end_of_file="R_scripts/required_packages.R" }
 
 ``````{ path="latticevision/cnn/__init__.py"  }
 
@@ -2303,11 +2229,12 @@ def eval_model(
 	truths_awght = np.exp(truths["kappa2"]) + 4
 
 	def compute_metrics(true: np.ndarray, pred: np.ndarray):
+		eps = 1e-6
 		mse = np.mean((true - pred) ** 2)
 		rmse = np.sqrt(mse)
 		mae = np.mean(np.abs(true - pred))
-		r2 = 1 - np.sum((true - pred) ** 2) / np.sum((true - np.mean(true)) ** 2)
-		nrmse = rmse / (np.max(true) - np.min(true))
+		r2 = 1 - np.sum((true - pred) ** 2) / np.sum((true - np.mean(true)) ** 2 + eps)
+		nrmse = rmse / (np.max(true) - np.min(true) + eps)
 		return rmse, mae, r2, nrmse
 
 	awght_metrics = compute_metrics(truths_awght, preds_awght)  # computed for reference
@@ -4104,11 +4031,12 @@ def eval_model(
 		Computes RMSE, MAE, R2, SSIM, PSNR, and NRMSE between two arrays.
 		Assumes true and pred have shape (num_images, height, width).
 		"""
+		eps = 1e-6
 		mse = np.mean((true - pred) ** 2)
 		rmse = np.sqrt(mse)
 		mae = np.mean(np.abs(true - pred))
-		r2 = 1 - np.sum((true - pred) ** 2) / np.sum((true - np.mean(true)) ** 2)
-		nrmse = rmse / (np.max(true) - np.min(true))
+		r2 = 1 - np.sum((true - pred) ** 2) / np.sum((true - np.mean(true)) ** 2 + eps)
+		nrmse = rmse / (np.max(true) - np.min(true) + eps)
 
 		# compute SSIM and PSNR for each image and then average
 		ssim_list = []
@@ -5156,9 +5084,9 @@ def set_all_random_seeds(seed: int, cudnn_deterministic: bool = False):
 ``````{ path="notebooks/cnn_demo.ipynb" processed_with="ipynb_to_md" }
 ## CNN Demo Notebook
 
-In this notebook we show how the CNN component in our project is trained and evaluated on smaller, stationary, anisotropic spatial data. 
+In this notebook we show how the CNN component in our project is trained and evaluated on smaller, anisotropic spatial data. 
 
-This notebook is nearly identical to the `img2img_demo.ipynb` notebook. 
+This notebook is very similar in structure to the `i2i_demo.ipynb` notebook. 
 For more details and guidance, please visit that notebook.
 
 ```python
@@ -5192,13 +5120,13 @@ device = set_device(machine="remote", gpu=True, gpu_id="cuda:0", verbose=True)
 ```
 
 ```python
-# dataset_path = "../sample_data/CNN_test_data.h5"
-# val_size = 0.4
-# test_size = 0.5
+dataset_path = "../data/CNN_sample_data.h5"
+val_size = 0.4
+test_size = 0.5
 
-dataset_path = "../data/CNN_data.h5"
-val_size = 0.1
-test_size = 0.2
+# dataset_path = "../data/CNN_data.h5"
+# val_size = 0.1
+# test_size = 0.2
 
 data_config = DataConfig(
 	file_path=dataset_path,
@@ -5231,7 +5159,8 @@ plot_example_field(
 ```
 
 ```python
-n_batch = 64
+# n_batch = 64
+n_batch = 2
 
 train_loader = DataLoader(train_df, batch_size=n_batch, shuffle=True)
 val_loader = DataLoader(val_df, batch_size=n_batch, shuffle=False)
@@ -5300,7 +5229,7 @@ train_config = TrainingConfig(
 	train_df=train_df,
 	val_df=val_df,
 	lr=1e-4,
-	n_epochs=20,
+	n_epochs=3,
 	stop_patience=10,
 	scheduler_patience=5,
 	scheduler_factor=0.5,
@@ -5358,12 +5287,12 @@ config = ModelConfig(
 #     padding = 0,
 # )
 
-# model = CNN(config)
-# state_dict = torch.load(
-# 	"../results/model_wghts/cnn_wghts25_ex.pth", map_location=torch.device(device)
-# )
-# model.load_state_dict(state_dict)
-# model.to(device)
+model = CNN(config)
+state_dict = torch.load(
+	"../results/model_wghts/modelCNN_size25_reps30.pth", map_location=torch.device(device)
+)
+model.load_state_dict(state_dict)
+model.to(device)
 ```
 
 ```python
@@ -5380,18 +5309,18 @@ metrics = eval_model(
 
 ### Local estimation on large image to image data 
 
-We tile up our images and take a moving-window approach to local estimation, returning the same metrics and images as we do with our large vision models:
+We take a moving-window approach to local estimation, returning the same metrics and images as we do with our large vision models:
 
 
 ```python
 # for testing
-# dataset_path_i2i = "../sample_data/STUN_test_data.h5"
-# val_size_i2i = 0.4
-# test_size_i2i = 0.5
+dataset_path_i2i = "../data/I2I_sample_data.h5"
+val_size_i2i = 0.4
+test_size_i2i = 0.5
 
-dataset_path_i2i = "../data/STUN_data.h5"
-val_size_i2i = 0.1
-test_size_i2i = 0.2
+# dataset_path_i2i = "../data/STUN_data.h5"
+# val_size_i2i = 0.1
+# test_size_i2i = 0.2
 
 data_config_i2i = Img2ImgDataConfig(
 	file_path=dataset_path_i2i,
@@ -5415,7 +5344,9 @@ test_df_i2i = data_dict["test_df"]
 
 del data_dict
 
-n_batch = 64
+# n_batch = 64
+n_batch = 2
+
 # make loader and df are in same order for eval funcs
 test_loader_i2i = DataLoader(test_df_i2i, batch_size=n_batch, shuffle=False)
 for fields, params in test_loader_i2i:
@@ -5478,8 +5409,8 @@ metrics = eval_img2img_model(
 ```
 
 ```python
-inds = [0, 9, 16, 32, 37]
-# inds = [0] # for test dataset
+# inds = [0, 9, 16, 32, 37]
+inds = [0] # for test dataset
 
 plot_img2img_samples(
 	model=model,
@@ -5870,7 +5801,7 @@ from latticevision.seed import set_all_random_seeds
 ```
 
 ```python
-# set random seed for reproducibility
+# fix random seed for reproducibility
 set_all_random_seeds(777)
 
 device = set_device(machine="remote", gpu_id="cuda:0", verbose=True)  # for remote use
@@ -6113,7 +6044,7 @@ plt.show()
 
 ``````{ end_of_file="notebooks/exploring_CESM.ipynb" }
 
-``````{ path="notebooks/img2img_demo.ipynb" processed_with="ipynb_to_md" }
+``````{ path="notebooks/i2i_demo.ipynb" processed_with="ipynb_to_md" }
 ## Image-to-image (I2I) Model Demo Notebook
 
 In this notebook we show how STUN, UNet, and ViT are trained and evaluated on non-stationary, spatial data. This notebook is intended to be a tutorial/demonstration. 
@@ -6414,9 +6345,9 @@ plot_img2img_samples(
 ```
 
 
-``````{ end_of_file="notebooks/img2img_demo.ipynb" }
+``````{ end_of_file="notebooks/i2i_demo.ipynb" }
 
-``````{ path="notebooks/img2img_trainloop.py"  }
+``````{ path="notebooks/i2i_trainloop.py"  }
 from torch.utils.data import DataLoader
 import pandas as pd
 import time
@@ -6710,7 +6641,7 @@ for num_replicates in num_replicates_list:
 
 	gc.collect()
 
-``````{ end_of_file="notebooks/img2img_trainloop.py" }
+``````{ end_of_file="notebooks/i2i_trainloop.py" }
 
 ``````{ path="notebooks/misc_figures.ipynb" processed_with="ipynb_to_md" }
 ### Misc Figures and Experiments
@@ -7896,15 +7827,73 @@ def test_stun(model_cls: nn.Module, pos_embed_cls: PosEmbed):
 ``````{ end_of_file="tests/test_stun_integration.py" }
 
 ``````{ path="README.md"  }
-# LatticeVision
+# LatticeVision (UNDER CONSTRUCTION)
 
-A private repository for my third paper, which uses a TransUNet architecture that takes in non-stationary fields and outputs their parameter (awght) fields for fast simulation with LatticeKrig. 
+This repository contains everything you need to train image-to-image (I2I) neural networks—using both U-Net and transformer-based architectures—for non-stationary parameter estimation on large spatial datasets. You’ll find tutorial notebooks, data-generation scripts, training and evaluation procedures, and example applications to climate-model outputs. All code accompanies our paper:
 
-gitignore specifies that data folder is ignored, data needs to be transferred manually from my machine to Daniel's
+*LatticeVision: Image to Image Networks for Modeling Non-Stationary Spatial Data*
 
-Daniel's machine has a remote env set up using UV
+**Authors**: Antony Sikorski, Michael Ivanitskiy, Nathan Lenssen, Douglas Nychka, Daniel McKenzie
 
-run `make help` to see available commands
+The paper is currently available on [arXiv](https://arxiv.org/abs/2505.09803).
+
+---
+
+## Installation
+
+Prior to running this code, one will need to download `Python`, `R` and `RStudio`, clone this repository, and install all necessary dependencies. 
+
+- **R:** The `R` programming language may be downloaded [here](https://cran.r-project.org/bin/windows/base/). We recommend [`RStudio`](https://posit.co/download/rstudio-desktop/) for opening and working with the `R` scripts (training data and synthetic field generation). 
+
+- **Python:** The `Python` programming language may be downloaded [here](https://www.python.org/downloads/). We use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) as our package manager. 
+
+- **Cloning this repo:** This repository can be cloned by running `git clone https://github.com/antonyxsik/LatticeVision.git` in your terminal. 
+
+- **Dependencies:**
+  - For `Python`: You can install the necessary dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running `uv sync`. If you do not wish to use `uv`, you can create a virtual environment however you wish, and run `pip install -r requirements.txt`. Both install the `latticevision` package, which contains our primary source code.
+  - For `R`: All dependencies can be downloaded by running `R_scripts/required_packages.R`.
+
+## Quick Start 
+
+- Download sample data and model wghts from google drive. all scripts currently point towards sample data.
+- run make test to run all of the tests.
+- a few additional make commands.
+- describe the notebooks and how they provide a good starting point.
+
+
+## Reproducing our results. 
+
+### Data Generation
+In order to reproduce our results, one must first generate the data:
+- To generate synthetic training/testing data for the I2I networks, one must simply run `R_scripts/i2i_datagen.R`. Instructions:
+  1. Open the file in RStudio.
+  2. Set the working directory to be that of the source file location (see the "Important" note in the file).
+  3. Choose the total size of the dataset and the chunk size that it will be created in (below the "Important" note and the imports).
+  4. Run the script (``Ctrl+A``, then ``Ctrl+Enter``). This will create `data/I2I_data.h5`. 
+- To make the data for the CNNs, one repeats the same process as above with `R_scripts/cnn_datagen.R`. This will create `data/CNN_data.h5`.
+
+### Train Models and Test on Synthetic Data
+- Run the scripts, these also will give you all of the simulated data results.
+
+
+### Climate Application
+- do the exploring_cesm notebook, then run the R script which does the climate things. 
+
+
+---
+
+## Citation
+
+Please use the following BibTeX to cite this work: 
+
+```{bibtex}
+@article{sikorski2025latticevision,
+  title={LatticeVision: Image to Image Networks for Modeling Non-Stationary Spatial Data},
+  author={Sikorski, Antony and Ivanitskiy, Michael and Lenssen, Nathan and Nychka, Douglas and McKenzie, Daniel},
+  journal={arXiv preprint arXiv:2505.09803},
+  year={2025}
+}
+```
 
 
 ``````{ end_of_file="README.md" }
@@ -8123,7 +8112,7 @@ help: help-targets info
 [project]
 name = "latticevision"
 version = "0.1.0"
-description = "TransUNet models as neural estimators for massive nonstationary spatial data"
+description = "Image to image networks for modeling big non-stationary spatial data"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
@@ -8238,174 +8227,670 @@ exports = [
 # This file was autogenerated by uv via the following command:
 #    uv export --no-hashes
 -e .
-anyio==4.6.2.post1
-appnope==0.1.4 ; platform_system == 'Darwin'
+aiohappyeyeballs==2.6.1
+    # via aiohttp
+aiohttp==3.11.13
+    # via
+    #   datasets
+    #   fsspec
+aiosignal==1.3.2
+    # via aiohttp
+antlr4-python3-runtime==4.9.3
+    # via omegaconf
+anyio==4.8.0
+    # via
+    #   httpx
+    #   jupyter-server
+appnope==0.1.4 ; sys_platform == 'darwin'
+    # via ipykernel
 argon2-cffi==23.1.0
+    # via jupyter-server
 argon2-cffi-bindings==21.2.0
+    # via argon2-cffi
 arrow==1.3.0
-asttokens==2.4.1
+    # via isoduration
+asttokens==3.0.0
+    # via stack-data
 async-lru==2.0.4
-attrs==24.2.0
-babel==2.16.0
-beautifulsoup4==4.12.3
+    # via jupyterlab
+async-timeout==5.0.1 ; python_full_version < '3.11'
+    # via aiohttp
+attrs==25.1.0
+    # via
+    #   aiohttp
+    #   igittigitt
+    #   jsonschema
+    #   referencing
+babel==2.17.0
+    # via jupyterlab-server
+beautifulsoup4==4.13.3
+    # via nbconvert
 bleach==6.2.0
-certifi==2024.8.30
+    # via nbconvert
+blobfile==3.0.0
+    # via torchtune
+bracex==2.5.post1 ; python_full_version >= '3.11'
+    # via wcmatch
+certifi==2025.1.31
+    # via
+    #   httpcore
+    #   httpx
+    #   netcdf4
+    #   requests
 cffi==1.17.1
+    # via
+    #   argon2-cffi-bindings
+    #   pyzmq
 cftime==1.6.4.post1
-charset-normalizer==3.4.0
-click==8.1.7
-colorama==0.4.6 ; sys_platform == 'win32' or platform_system == 'Windows'
+    # via netcdf4
+charset-normalizer==3.4.1
+    # via requests
+cli-exit-tools==1.2.7 ; python_full_version >= '3.11'
+    # via igittigitt
+click==8.1.8
+    # via
+    #   cli-exit-tools
+    #   igittigitt
+    #   pysr
+    #   typer
+colorama==0.4.6 ; sys_platform == 'win32'
+    # via
+    #   click
+    #   ipython
+    #   pytest
+    #   tqdm
 comm==0.2.2
+    # via
+    #   ipykernel
+    #   ipywidgets
 contourpy==1.3.1
-coverage==7.6.7
+    # via matplotlib
+coverage==7.6.12
+    # via
+    #   coverage-badge
+    #   pytest-cov
 coverage-badge==1.1.2
 cycler==0.12.1
-debugpy==1.8.8
-decorator==5.1.1
+    # via matplotlib
+datasets==3.3.2
+    # via torchtune
+debugpy==1.8.12
+    # via ipykernel
+decorator==5.2.1
+    # via ipython
 defusedxml==0.7.1
+    # via nbconvert
+dill==0.3.8
+    # via
+    #   datasets
+    #   multiprocess
 exceptiongroup==1.2.2 ; python_full_version < '3.11'
-executing==2.1.0
-fastjsonschema==2.20.0
-filelock==3.16.1
-fonttools==4.55.0
+    # via
+    #   anyio
+    #   ipython
+    #   pytest
+executing==2.2.0
+    # via stack-data
+fastjsonschema==2.21.1
+    # via nbformat
+filelock==3.17.0
+    # via
+    #   blobfile
+    #   datasets
+    #   huggingface-hub
+    #   juliapkg
+    #   torch
+fonttools==4.56.0
+    # via matplotlib
 fqdn==1.5.1
-fsspec==2024.10.0
+    # via jsonschema
+frozenlist==1.5.0
+    # via
+    #   aiohttp
+    #   aiosignal
+fsspec==2024.12.0
+    # via
+    #   datasets
+    #   huggingface-hub
+    #   torch
 h11==0.14.0
-h5py==3.12.1
+    # via httpcore
+h5py==3.13.0
+    # via latticevision
+hf-transfer==0.1.9
+    # via huggingface-hub
 httpcore==1.0.7
-httpx==0.27.2
+    # via httpx
+httpx==0.28.1
+    # via jupyterlab
+huggingface-hub==0.29.3
+    # via
+    #   datasets
+    #   torchtune
 idna==3.10
-imageio==2.36.0
+    # via
+    #   anyio
+    #   httpx
+    #   jsonschema
+    #   requests
+    #   yarl
+igittigitt==2.1.5 ; python_full_version >= '3.11'
+    # via lmcat
+imageio==2.37.0
+    # via scikit-image
 iniconfig==2.0.0
+    # via pytest
 ipykernel==6.29.5
-ipython==8.29.0
+    # via
+    #   jupyter
+    #   jupyter-console
+    #   jupyterlab
+    #   latticevision
+ipython==8.33.0 ; python_full_version < '3.11'
+    # via
+    #   ipykernel
+    #   ipywidgets
+    #   jupyter-console
+ipython==9.0.0 ; python_full_version >= '3.11'
+    # via
+    #   ipykernel
+    #   ipywidgets
+    #   jupyter-console
+ipython-pygments-lexers==1.1.1 ; python_full_version >= '3.11'
+    # via ipython
 ipywidgets==8.1.5
+    # via jupyter
 isoduration==20.11.0
+    # via jsonschema
 jedi==0.19.2
-jinja2==3.1.4
+    # via ipython
+jinja2==3.1.5
+    # via
+    #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
+    #   nbconvert
+    #   pdoc
+    #   torch
 joblib==1.4.2
-json5==0.9.28
+    # via scikit-learn
+json5==0.10.0
+    # via jupyterlab-server
 jsonpointer==3.0.0
+    # via jsonschema
 jsonschema==4.23.0
+    # via
+    #   jupyter-events
+    #   jupyterlab-server
+    #   nbformat
 jsonschema-specifications==2024.10.1
-juliacall==0.9.23
-juliapkg==0.1.15
+    # via jsonschema
+juliacall==0.9.24
+    # via pysr
+juliapkg==0.1.16
+    # via juliacall
 jupyter==1.1.1
+    # via latticevision
 jupyter-client==8.6.3
+    # via
+    #   ipykernel
+    #   jupyter-console
+    #   jupyter-server
+    #   nbclient
 jupyter-console==6.6.3
+    # via jupyter
 jupyter-core==5.7.2
-jupyter-events==0.10.0
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-console
+    #   jupyter-server
+    #   jupyterlab
+    #   nbclient
+    #   nbconvert
+    #   nbformat
+jupyter-events==0.12.0
+    # via jupyter-server
 jupyter-lsp==2.2.5
-jupyter-server==2.14.2
+    # via jupyterlab
+jupyter-server==2.15.0
+    # via
+    #   jupyter-lsp
+    #   jupyterlab
+    #   jupyterlab-server
+    #   notebook
+    #   notebook-shim
 jupyter-server-terminals==0.5.3
-jupyterlab==4.3.1
+    # via jupyter-server
+jupyterlab==4.3.5
+    # via
+    #   jupyter
+    #   notebook
 jupyterlab-pygments==0.3.0
+    # via nbconvert
 jupyterlab-server==2.27.3
+    # via
+    #   jupyterlab
+    #   notebook
 jupyterlab-widgets==3.0.13
-kiwisolver==1.4.7
+    # via ipywidgets
+kagglehub==0.3.10
+    # via torchtune
+kiwisolver==1.4.8
+    # via matplotlib
 lazy-loader==0.4
-libcst==1.5.1
+    # via scikit-image
+lib-detect-testenv==2.0.8 ; python_full_version >= '3.11'
+    # via
+    #   cli-exit-tools
+    #   igittigitt
+libcst==1.6.0
+    # via pycln
+lmcat==0.2.0 ; python_full_version >= '3.11'
+lxml==5.3.1
+    # via blobfile
 markdown-it-py==3.0.0
+    # via rich
 markupsafe==3.0.2
-matplotlib==3.9.2
+    # via
+    #   jinja2
+    #   nbconvert
+    #   pdoc
+matplotlib==3.10.1
+    # via latticevision
 matplotlib-inline==0.1.7
+    # via
+    #   ipykernel
+    #   ipython
 mdurl==0.1.2
-mistune==3.0.2
+    # via markdown-it-py
+mistune==3.1.2
+    # via nbconvert
 mpmath==1.3.0
-mypy==1.13.0
+    # via sympy
+multidict==6.1.0
+    # via
+    #   aiohttp
+    #   yarl
+multiprocess==0.70.16
+    # via datasets
+muutils==0.8.3 ; python_full_version >= '3.11'
+    # via lmcat
+mypy==1.15.0
 mypy-extensions==1.0.0
-nbclient==0.10.0
-nbconvert==7.16.4
+    # via mypy
+nbclient==0.10.2
+    # via nbconvert
+nbconvert==7.16.6
+    # via
+    #   jupyter
+    #   jupyter-server
 nbformat==5.10.4
+    # via
+    #   jupyter-server
+    #   nbclient
+    #   nbconvert
 nest-asyncio==1.6.0
+    # via ipykernel
 netcdf4==1.7.2
+    # via latticevision
 networkx==3.4.2
-notebook==7.0.7
+    # via
+    #   scikit-image
+    #   torch
+notebook==7.3.2
+    # via jupyter
 notebook-shim==0.2.4
-numpy==2.1.3
-nvidia-cublas-cu12==12.4.5.8 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-cuda-cupti-cu12==12.4.127 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-cuda-nvrtc-cu12==12.4.127 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-cuda-runtime-cu12==12.4.127 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-cudnn-cu12==9.1.0.70 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-cufft-cu12==11.2.1.3 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-curand-cu12==10.3.5.147 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-cusolver-cu12==11.6.1.9 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-cusparse-cu12==12.3.1.170 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-nccl-cu12==2.21.5 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-nvjitlink-cu12==12.4.127 ; platform_machine == 'x86_64' and platform_system == 'Linux'
-nvidia-nvtx-cu12==12.4.127 ; platform_machine == 'x86_64' and platform_system == 'Linux'
+    # via
+    #   jupyterlab
+    #   notebook
+numpy==2.2.3
+    # via
+    #   cftime
+    #   contourpy
+    #   datasets
+    #   h5py
+    #   imageio
+    #   latticevision
+    #   matplotlib
+    #   netcdf4
+    #   pandas
+    #   pysr
+    #   scikit-image
+    #   scikit-learn
+    #   scipy
+    #   tifffile
+    #   torchtune
+    #   torchvision
+nvidia-cublas-cu12==12.4.5.8 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via
+    #   nvidia-cudnn-cu12
+    #   nvidia-cusolver-cu12
+    #   torch
+nvidia-cuda-cupti-cu12==12.4.127 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+nvidia-cuda-nvrtc-cu12==12.4.127 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+nvidia-cuda-runtime-cu12==12.4.127 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+nvidia-cudnn-cu12==9.1.0.70 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+nvidia-cufft-cu12==11.2.1.3 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+nvidia-curand-cu12==10.3.5.147 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+nvidia-cusolver-cu12==11.6.1.9 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+nvidia-cusparse-cu12==12.3.1.170 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via
+    #   nvidia-cusolver-cu12
+    #   torch
+nvidia-cusparselt-cu12==0.6.2 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+nvidia-nccl-cu12==2.21.5 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+nvidia-nvjitlink-cu12==12.4.127 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via
+    #   nvidia-cufft-cu12
+    #   nvidia-cusolver-cu12
+    #   nvidia-cusparse-cu12
+    #   torch
+nvidia-nvtx-cu12==12.4.127 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+omegaconf==2.3.0
+    # via torchtune
 overrides==7.7.0
+    # via jupyter-server
 packaging==24.2
+    # via
+    #   datasets
+    #   huggingface-hub
+    #   ipykernel
+    #   jupyter-events
+    #   jupyter-server
+    #   jupyterlab
+    #   jupyterlab-server
+    #   kagglehub
+    #   lazy-loader
+    #   matplotlib
+    #   nbconvert
+    #   pytest
+    #   scikit-image
 pandas==2.2.3
+    # via
+    #   datasets
+    #   latticevision
+    #   pysr
 pandocfilters==1.5.1
+    # via nbconvert
 parso==0.8.4
+    # via jedi
 pathspec==0.12.1
-pdoc==15.0.0
+    # via pycln
+pdoc==15.0.1
 pexpect==4.9.0 ; sys_platform != 'emscripten' and sys_platform != 'win32'
-pillow==11.0.0
+    # via ipython
+pillow==11.1.0
+    # via
+    #   imageio
+    #   matplotlib
+    #   scikit-image
+    #   torchtune
+    #   torchvision
 platformdirs==4.3.6
+    # via jupyter-core
 pluggy==1.5.0
-prometheus-client==0.21.0
-prompt-toolkit==3.0.48
-psutil==6.1.0
+    # via pytest
+prometheus-client==0.21.1
+    # via jupyter-server
+prompt-toolkit==3.0.50
+    # via
+    #   ipython
+    #   jupyter-console
+propcache==0.3.0
+    # via
+    #   aiohttp
+    #   yarl
+psutil==7.0.0
+    # via
+    #   ipykernel
+    #   torchtune
 ptyprocess==0.7.0 ; os_name != 'nt' or (sys_platform != 'emscripten' and sys_platform != 'win32')
+    # via
+    #   pexpect
+    #   terminado
 pure-eval==0.2.3
-pycln==2.4.0
+    # via stack-data
+pyarrow==19.0.1
+    # via datasets
+pycln==2.5.0
 pycparser==2.22
-pygments==2.18.0
-pyparsing==3.2.0
-pysr==0.19.4
-pytest==8.3.3
+    # via cffi
+pycryptodomex==3.21.0
+    # via blobfile
+pygments==2.19.1
+    # via
+    #   ipython
+    #   ipython-pygments-lexers
+    #   jupyter-console
+    #   nbconvert
+    #   pdoc
+    #   rich
+pyparsing==3.2.1
+    # via matplotlib
+pysr==1.5.1
+    # via latticevision
+pytest==8.3.5
+    # via pytest-cov
 pytest-cov==6.0.0
 python-dateutil==2.9.0.post0
-python-json-logger==2.0.7
-pytz==2024.2
+    # via
+    #   arrow
+    #   jupyter-client
+    #   matplotlib
+    #   pandas
+python-json-logger==3.2.1
+    # via jupyter-events
+pytz==2025.1
+    # via pandas
 pywin32==308 ; platform_python_implementation != 'PyPy' and sys_platform == 'win32'
-pywinpty==2.0.14 ; os_name == 'nt'
+    # via jupyter-core
+pywinpty==2.0.15 ; os_name == 'nt'
+    # via
+    #   jupyter-server
+    #   jupyter-server-terminals
+    #   terminado
 pyyaml==6.0.2
-pyzmq==26.2.0
-referencing==0.35.1
+    # via
+    #   datasets
+    #   huggingface-hub
+    #   jupyter-events
+    #   kagglehub
+    #   libcst
+    #   omegaconf
+    #   pycln
+pyzmq==26.2.1
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-console
+    #   jupyter-server
+referencing==0.36.2
+    # via
+    #   jsonschema
+    #   jsonschema-specifications
+    #   jupyter-events
+regex==2024.11.6
+    # via tiktoken
 requests==2.32.3
+    # via
+    #   datasets
+    #   huggingface-hub
+    #   jupyterlab-server
+    #   kagglehub
+    #   tiktoken
 rfc3339-validator==0.1.4
+    # via
+    #   jsonschema
+    #   jupyter-events
 rfc3986-validator==0.1.1
+    # via
+    #   jsonschema
+    #   jupyter-events
 rich==13.9.4
-rpds-py==0.21.0
-ruff==0.7.4
-scikit-image==0.24.0
-scikit-learn==1.5.2
-scipy==1.14.1
-semver==3.0.2
+    # via typer
+rpds-py==0.23.1
+    # via
+    #   jsonschema
+    #   referencing
+ruff==0.9.9
+safetensors==0.5.3
+    # via torchtune
+scikit-image==0.25.2
+    # via latticevision
+scikit-learn==1.6.1
+    # via
+    #   latticevision
+    #   pysr
+scipy==1.15.2
+    # via
+    #   scikit-image
+    #   scikit-learn
+semver==3.0.4
+    # via juliapkg
 send2trash==1.8.3
-setuptools==75.5.0
+    # via jupyter-server
+sentencepiece==0.2.0
+    # via torchtune
+setuptools==75.8.2
+    # via
+    #   coverage-badge
+    #   jupyterlab
+    #   pysr
+    #   torch
 shellingham==1.5.4
-six==1.16.0
+    # via typer
+six==1.17.0
+    # via
+    #   python-dateutil
+    #   rfc3339-validator
 sniffio==1.3.1
+    # via anyio
 soupsieve==2.6
+    # via beautifulsoup4
 stack-data==0.6.3
+    # via ipython
 sympy==1.13.1
+    # via
+    #   pysr
+    #   torch
 terminado==0.18.1
+    # via
+    #   jupyter-server
+    #   jupyter-server-terminals
 threadpoolctl==3.5.0
-tifffile==2024.9.20
+    # via scikit-learn
+tifffile==2025.2.18
+    # via scikit-image
+tiktoken==0.9.0
+    # via torchtune
 tinycss2==1.4.0
-tomli==2.1.0 ; python_full_version <= '3.11'
+    # via bleach
+tomli==2.2.1 ; python_full_version <= '3.11'
+    # via
+    #   coverage
+    #   jupyterlab
+    #   mypy
+    #   pytest
 tomlkit==0.13.2
-torch==2.5.1
+    # via pycln
+torch==2.6.0
+    # via
+    #   latticevision
+    #   torchvision
+torchao==0.9.0
+    # via latticevision
 torchsummary==1.5.1
-torchvision==0.20.1
-tornado==6.4.1
+    # via latticevision
+torchtune==0.5.0
+    # via latticevision
+torchvision==0.21.0
+    # via latticevision
+tornado==6.4.2
+    # via
+    #   ipykernel
+    #   jupyter-client
+    #   jupyter-server
+    #   jupyterlab
+    #   notebook
+    #   terminado
+tqdm==4.67.1
+    # via
+    #   datasets
+    #   huggingface-hub
+    #   kagglehub
+    #   torchtune
 traitlets==5.14.3
-triton==3.1.0 ; python_full_version < '3.13' and platform_machine == 'x86_64' and platform_system == 'Linux'
-typer==0.13.1
-types-python-dateutil==2.9.0.20241003
+    # via
+    #   comm
+    #   ipykernel
+    #   ipython
+    #   ipywidgets
+    #   jupyter-client
+    #   jupyter-console
+    #   jupyter-core
+    #   jupyter-events
+    #   jupyter-server
+    #   jupyterlab
+    #   matplotlib-inline
+    #   nbclient
+    #   nbconvert
+    #   nbformat
+triton==3.2.0 ; platform_machine == 'x86_64' and sys_platform == 'linux'
+    # via torch
+typer==0.15.2
+    # via pycln
+types-python-dateutil==2.9.0.20241206
+    # via arrow
 typing-extensions==4.12.2
-tzdata==2024.2
+    # via
+    #   anyio
+    #   async-lru
+    #   beautifulsoup4
+    #   huggingface-hub
+    #   ipython
+    #   mistune
+    #   multidict
+    #   mypy
+    #   referencing
+    #   rich
+    #   torch
+    #   typer
+tzdata==2025.1
+    # via pandas
 uri-template==1.3.0
-urllib3==2.2.3
+    # via jsonschema
+urllib3==2.3.0
+    # via
+    #   blobfile
+    #   requests
+wcmatch==10.0 ; python_full_version >= '3.11'
+    # via igittigitt
 wcwidth==0.2.13
+    # via prompt-toolkit
 webcolors==24.11.1
+    # via jsonschema
 webencodings==0.5.1
+    # via
+    #   bleach
+    #   tinycss2
 websocket-client==1.8.0
+    # via jupyter-server
 widgetsnbextension==4.0.13
+    # via ipywidgets
+xxhash==3.5.0
+    # via datasets
+yarl==1.18.3
+    # via aiohttp
 
 ``````{ end_of_file="requirements.txt" }
