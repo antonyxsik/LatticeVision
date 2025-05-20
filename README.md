@@ -39,7 +39,7 @@ In order to reproduce our results, one must first generate the data:
 - To generate synthetic training/testing data for the I2I networks, one must simply run `R_scripts/i2i_datagen.R`. Instructions:
   1. Open the file in RStudio.
   2. Set the working directory to be that of the source file location (see the "Important" note in the file).
-  3. Choose the total size of the dataset and the chunk size that it will be created in (directly below the "Important" note).
+  3. Choose the total size of the dataset and the chunk size that it will be created in (below the "Important" note and the imports).
   4. Run the script (``Ctrl+A``, then ``Ctrl+Enter``).
 - To make the data for the CNNs, one repeats the same process as above with `R_scripts/cnn_datagen.R`. 
 
