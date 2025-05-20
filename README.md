@@ -1,4 +1,4 @@
-# LatticeVision (UNDER CONSTRUCTION)
+# LatticeVision 
 
 This repository contains everything you need to train image-to-image (I2I) neural networks—using both U-Net and transformer-based architectures—for non-stationary parameter estimation on large spatial datasets. You’ll find tutorial notebooks, data-generation scripts, training and evaluation procedures, and example applications to climate-model outputs. All code accompanies our paper:
 
@@ -26,11 +26,15 @@ Prior to running this code, one will need to download `Python`, `R` and `RStudio
 
 ## Quick Start 
 
-- Download sample data and model wghts from google drive. all scripts currently point towards sample data.
-- run make test to run all of the tests.
-- a few additional make commands.
-- describe the notebooks and how they provide a good starting point.
+To get started with our code, download our sample data, model weights (for the `STUN` and `CNN25` networks trained on 30 replicates), and their climate application results from [this Google Drive folder](https://drive.google.com/drive/folders/1OcgHHqqNmK48qdvHCP_PQpXXKq_EYCWD?usp=sharing):
 
+1. Prepare `data/` and `results/` folders: 
+  - Create `data/` in the root of this project (ignored by Git), then download and place `I2I_sample_data.h5` and `CNN_sample_data.h5` from Google Drive. 
+  - Create `results/` in the root of this project (also ignored), with subfolders `clim_outputs/` and `model_wghts/`. Download the corresponding Google Drive components for both folders. 
+
+2. Explore our tutorial/demo style notebooks in `notebooks/` (`i2i_demo.ipynb`, `cnn_demo.ipynb`, `cesm_application.ipynb`) to get a sense for our core workflows and codebase. These should all point to/utilize the model weights and sample data that you downloaded. 
+
+3. Optionally, run `make test` to run all tests, and run `make help` to print out other available commands. 
 
 ## Reproducing our results. 
 

@@ -38,7 +38,7 @@ num_replicates_list = [1, 5, 15, 30]
 
 # load big i2i data first, depends on num replicates
 for num_replicates in num_replicates_list:
-	dataset_path_i2i = "data/STUN_data.h5"
+	dataset_path_i2i = "data/I2I_data.h5"
 	val_size_i2i = 0.1
 	test_size_i2i = 0.2
 
@@ -269,7 +269,7 @@ for num_replicates in num_replicates_list:
 		)
 
 		# now we feed in clim fields
-		file_path = "sample_data/CESM_LENS_fields.h5"
+		file_path = "data/CESM_LENS_fields.h5"
 		with h5py.File(file_path, "r") as f:
 			print("Components in the file:", list(f.keys()))
 

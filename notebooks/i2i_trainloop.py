@@ -50,7 +50,7 @@ pos_embeddings_all = [NullPosEmbed, LearnedPosEmbed, SinusoidalPosEmbed, RotaryP
 
 for num_replicates in num_replicates_list:
 	# create dataset and dataloaders
-	dataset_path = "data/STUN_data.h5"
+	dataset_path = "data/I2I_data.h5"
 	val_size = 0.1
 	test_size = 0.2
 
@@ -234,7 +234,7 @@ for num_replicates in num_replicates_list:
 				index=False,
 			)
 
-			file_path = "sample_data/CESM_LENS_fields.h5"
+			file_path = "data/CESM_LENS_fields.h5"
 			with h5py.File(file_path, "r") as f:
 				print("Components in the file:", list(f.keys()))
 
