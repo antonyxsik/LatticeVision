@@ -30,15 +30,15 @@ git clone https://github.com/antonyxsik/LatticeVision.git
 - **Dependencies:**
   - For `Python`: You can install dependencies and create a virtual environment using [`uv`](https://docs.astral.sh/uv/) by running 
 
-  ```
-  uv sync
-  ```
+    ```
+    uv sync
+    ```
    
   If you do not wish to use `uv`, you can create a virtual environment however you wish, and run 
 
-  ```
-  pip install -r requirements.txt
-  ```
+    ```
+    pip install -r requirements.txt
+    ```
    
   Both install the `latticevision` package, which contains our primary source code.
   - For `R`: All dependencies can be downloaded by opening and running `R_scripts/required_packages.R`.
@@ -55,11 +55,15 @@ To get started with our code, download our sample data, network weights (for bot
 
 3. Optionally, run 
 
-```make test```
+  ```
+  make test
+  ```
 
  to run all tests, and run 
 
- ```make help``` 
+  ```
+  make help
+  ``` 
 
  to print out other available commands. 
 
