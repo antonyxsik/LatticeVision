@@ -60,7 +60,7 @@ To get started with our code, download our sample data, network weights (for bot
    make test
    ```
 
-  to run all tests, and run 
+   to run all tests, and run 
 
    ```
    make help
