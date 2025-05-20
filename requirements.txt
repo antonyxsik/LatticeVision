@@ -38,7 +38,9 @@ attrs==25.1.0
 babel==2.17.0
     # via jupyterlab-server
 beautifulsoup4==4.13.3
-    # via nbconvert
+    # via
+    #   gdown
+    #   nbconvert
 bleach==6.2.0
     # via nbconvert
 blobfile==3.0.0
@@ -111,6 +113,7 @@ filelock==3.17.0
     # via
     #   blobfile
     #   datasets
+    #   gdown
     #   huggingface-hub
     #   juliapkg
     #   torch
@@ -127,6 +130,8 @@ fsspec==2024.12.0
     #   datasets
     #   huggingface-hub
     #   torch
+gdown==5.2.0
+    # via latticevision
 h11==0.14.0
     # via httpcore
 h5py==3.13.0
@@ -452,6 +457,8 @@ pygments==2.19.1
     #   rich
 pyparsing==3.2.1
     # via matplotlib
+pysocks==1.7.1
+    # via requests
 pysr==1.5.1
     # via latticevision
 pytest==8.3.5
@@ -499,6 +506,7 @@ regex==2024.11.6
 requests==2.32.3
     # via
     #   datasets
+    #   gdown
     #   huggingface-hub
     #   jupyterlab-server
     #   kagglehub
@@ -601,6 +609,7 @@ tornado==6.4.2
 tqdm==4.67.1
     # via
     #   datasets
+    #   gdown
     #   huggingface-hub
     #   kagglehub
     #   torchtune

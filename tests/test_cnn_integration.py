@@ -22,37 +22,38 @@ from latticevision.img2img.eval import eval_model as eval_img2img_model
 DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
 
+
 # helper function to download data from gdrive
 def download_from_gdrive(filename: str, gdrive_id: str) -> str:
-    """
-    Make sure data/filename exists.  If not, download from the given
-    Google Drive file-id (via gdown) into data/.
-    Returns the full local path.
-    """
-    path = os.path.join(DATA_DIR, filename)
-    if not os.path.isfile(path):
-        try:
-            import gdown
-        except ImportError:
-            raise ImportError(
-                "Missing data file and gdown not installed. "
-                "Run `pip install gdown` to enable auto-download."
-            )
-        url = f"https://drive.google.com/uc?id={gdrive_id}"
-        print(f"[setup] {filename} not found—downloading from Google Drive…")
-        gdown.download(url, path, quiet=False)
-    return path
+	"""
+	Make sure data/filename exists.  If not, download from the given
+	Google Drive file-id (via gdown) into data/.
+	Returns the full local path.
+	"""
+	path = os.path.join(DATA_DIR, filename)
+	if not os.path.isfile(path):
+		try:
+			import gdown
+		except ImportError:
+			raise ImportError(
+				"Missing data file and gdown not installed. "
+				"Run `pip install gdown` to enable auto-download."
+			)
+		url = f"https://drive.google.com/uc?id={gdrive_id}"
+		print(f"[setup] {filename} not found—downloading from Google Drive…")
+		gdown.download(url, path, quiet=False)
+	return path
 
 
 # i2i data and gdrive location
-I2I_FILENAME    = "I2I_sample_data.h5"
-I2I_GDRIVE_ID   = "1Hz1aRc49sBy0d74iwkfxu_djzwZsEW39"
-I2I_FILE_PATH   = download_from_gdrive(I2I_FILENAME, I2I_GDRIVE_ID)
+I2I_FILENAME = "I2I_sample_data.h5"
+I2I_GDRIVE_ID = "1Hz1aRc49sBy0d74iwkfxu_djzwZsEW39"
+I2I_FILE_PATH = download_from_gdrive(I2I_FILENAME, I2I_GDRIVE_ID)
 
 # cnn data and gdrive location
-CNN_FILENAME    = "CNN_sample_data.h5"
-CNN_GDRIVE_ID   = "13o65Gt8KYsC7Jjl7s3Pgg51SuDFZtwUq"
-CNN_FILE_PATH   = download_from_gdrive(CNN_FILENAME, CNN_GDRIVE_ID)
+CNN_FILENAME = "CNN_sample_data.h5"
+CNN_GDRIVE_ID = "13o65Gt8KYsC7Jjl7s3Pgg51SuDFZtwUq"
+CNN_FILE_PATH = download_from_gdrive(CNN_FILENAME, CNN_GDRIVE_ID)
 
 
 def test_cnn():

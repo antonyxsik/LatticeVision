@@ -37,17 +37,17 @@ GDRIVE_URL = f"https://drive.google.com/uc?id={GDRIVE_ID}"
 
 
 if not os.path.isdir(DATA_DIR):
-    os.makedirs(DATA_DIR, exist_ok=True)
+	os.makedirs(DATA_DIR, exist_ok=True)
 
 if not os.path.isfile(DATA_PATH):
-    try:
-        import gdown
-    except ImportError:
-        raise ImportError(
-            "Please install gdown (`pip install gdown`) so the test can auto-download the data."
-        )
-    print(f"{DATA_PATH} not found. Downloading from Google Drive...")
-    gdown.download(GDRIVE_URL, DATA_PATH, quiet=False)
+	try:
+		import gdown
+	except ImportError:
+		raise ImportError(
+			"Please install gdown so the test can auto-download the data."
+		)
+	print(f"{DATA_PATH} not found. Downloading from Google Drive...")
+	gdown.download(GDRIVE_URL, DATA_PATH, quiet=False)
 
 
 @pytest.mark.parametrize(
