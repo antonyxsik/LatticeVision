@@ -8,6 +8,10 @@ This repository contains everything you need to train image-to-image (I2I) neura
 
 The paper is currently available on [arXiv](https://arxiv.org/abs/2505.09803).
 
+<p align="center">
+  <img src="results/figures/flowchart_v5.png" alt="The main workflow of LatticeVision." width="700"/>
+</p>
+
 ---
 
 ## Installation
@@ -36,7 +40,7 @@ To get started with our code, download our sample data, model weights (for the `
 
 3. Optionally, run `make test` to run all tests, and run `make help` to print out other available commands. 
 
-## Reproducing our results. 
+## Reproducing Results
 
 ### Data Generation
 In order to reproduce our results, one must first generate the data:

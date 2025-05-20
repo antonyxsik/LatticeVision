@@ -2,7 +2,9 @@
 data/
 
 # same with results 
-results/
+results/clim_outputs/
+results/metrics/
+results/model_wghts/
 
 ## additional files
 .DS_Store
