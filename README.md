@@ -23,7 +23,7 @@ Prior to running this code, one will need to download `Python`, `R` and `RStudio
 - **Python:** The `Python` programming language may be downloaded [here](https://www.python.org/downloads/). We use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) as our package manager. 
 
 - **Cloning this repo:** This repository can be cloned by running the following your terminal:
-```{bash}
+```
 git clone https://github.com/antonyxsik/LatticeVision.git
 ``` 
 
