@@ -22,7 +22,7 @@ Prior to running this code, one will need to download `Python`, `R` and `RStudio
 
 - **Python:** The `Python` programming language may be downloaded [here](https://www.python.org/downloads/). We use [`uv`](https://docs.astral.sh/uv/getting-started/installation/) as our package manager. 
 
-- **Cloning this repo:** This repository can be cloned by running the following your terminal:
+- **Cloning this repo:** This repository can be cloned by running the following in your terminal:
    ```
    git clone https://github.com/antonyxsik/LatticeVision.git
    ``` 
@@ -95,7 +95,7 @@ These scripts will train 4 U-Nets, 16 ViTs, 16 STUNs, and 12 CNNs due to differe
 
 - The training scripts above automatically generate the parameter estimates for the climate model fields in `results/clim_outputs/`. 
 - Alternatively, one can also load a trained network into `notebooks/cesm_application.ipynb` and uncomment the saving code to create these. 
-- After the parameters have been estimated, open `R_scripts/cesm_ensemble_sim.R` and point towards the outputs of interest in order to generate synthetic climate ensembles and reproduce our correlation comparison experiments. 
+- After the parameters have been estimated, open `R_scripts/cesm_ensemble_sim.R` and change the file paths in the script to point towards the outputs of interest in order to generate synthetic climate ensembles and reproduce our correlation comparison experiments. 
 
 ---
 
