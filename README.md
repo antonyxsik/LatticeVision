@@ -80,7 +80,7 @@ In order to reproduce our results, one must first generate the data:
   4. Run the script (``Ctrl+A``, then ``Ctrl+Enter``). This will create `data/I2I_data.h5`. 
 - To make the data for the CNNs, one repeats the same process as above with `R_scripts/cnn_datagen.R`. This will create `data/CNN_data.h5`.
 
-### Training and Evaluating Networks Synthetic Data
+### Training and Evaluating Networks on Synthetic Data
 
 - You can train **_all_** of the I2I networks by running `notebooks/i2i_trainloop.py`. 
 - **_All_** CNNs can be trained by running `notebooks/cnn_trainloop.py`.
