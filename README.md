@@ -72,12 +72,10 @@ To get started with our code, download our sample data, network weights (for bot
 
 ### Data Generation
 
-**Note:** Set your working directory to the source file location before running the R scripts to avoid path errors from the `here` package.
-
 In order to reproduce our results, one must first generate the data:
 - To generate synthetic training/testing data for the I2I networks, run `R_scripts/i2i_datagen.R`. Instructions:
   1. Open the file in `RStudio`.
-  2. Set the working directory to be that of the source file location (see the "Important" note in the file).
+  2. Set the working directory to be that of the source file location (see the "Important" note in the file). Make sure to do this *before* running anything in the script, otherwise you may encounter path errors from the `here` package. 
   3. Choose the total size of the dataset and the chunk size (to avoid overloading RAM) that it will be created in (below the "Important" note and the imports).
   4. Run the script (``Ctrl+A``, then ``Ctrl+Enter``). This will create `data/I2I_data.h5`. 
 - To make the data for the CNNs, one repeats the same process as above with `R_scripts/cnn_datagen.R`. This will create `data/CNN_data.h5`.
