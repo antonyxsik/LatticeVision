@@ -26,6 +26,9 @@ dependencies = [
     "pysr>=0.19.4",
     "netcdf4>=1.5.8",
     "gdown>=5.2.0",
+    "xarray>=2025.6.1",
+    "zarr>=2.18.3",
+    "gcsfs>=2025.9.0",
 ]
 
 # default groups to install

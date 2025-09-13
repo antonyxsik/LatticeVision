@@ -52,7 +52,7 @@ To get started with our code, download our sample data, network weights (for bot
    - Create `data/` in the root of this project (ignored by Git), then download everything into it from the `data/` folder in Google Drive (sample synthetic data and climate fields). 
    - Create `results/` in the root of this project (also ignored), with subfolders `clim_outputs/` and `model_wghts/`. Download the corresponding Google Drive components for both folders. 
 
-2. Explore our tutorial/demo style notebooks in `notebooks/` (`i2i_demo.ipynb`, `cnn_demo.ipynb`, `cesm_application.ipynb`) to get a sense for our core workflows and codebase. These should all point to/utilize the network weights and sample data that you downloaded. 
+2. Explore our tutorial/demo style notebooks in `notebooks/` (`i2i_demo.ipynb`, `cnn_demo.ipynb`, `clim_application.ipynb`) to get a sense for our core workflows and codebase. These should all point to/utilize the network weights and sample data that you downloaded. 
 
 3. Optionally, run 
 
@@ -94,8 +94,8 @@ These scripts will train 4 U-Nets, 16 ViTs, 16 STUNs, and 12 CNNs due to differe
 ### Climate Application
 
 - The training scripts above automatically generate the parameter estimates for the climate model fields in `results/clim_outputs/`. 
-- Alternatively, one can also load a trained network into `notebooks/cesm_application.ipynb` and uncomment the saving code to create these. 
-- After the parameters have been estimated, open `R_scripts/cesm_ensemble_sim.R` and change the file paths in the script to point towards the outputs of interest in order to generate synthetic climate ensembles and reproduce our correlation comparison experiments. 
+- Alternatively, one can also load a trained network into `notebooks/clim_application.ipynb` and uncomment the saving code to create these. 
+- After the parameters have been estimated, open `R_scripts/clim_ensemble_sim.R` and change the file paths in the script to point towards the outputs of interest in order to generate synthetic climate ensembles and reproduce our correlation comparison experiments. 
 
 ---
 
