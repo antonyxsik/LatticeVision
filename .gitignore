@@ -1,3 +1,6 @@
+# testing notebooks
+notebooks/testing_ignore/
+
 # data is to be ignored
 data/
 
