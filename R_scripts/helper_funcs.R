@@ -1,3 +1,7 @@
+# Make sure you have downloaded all required 
+# packages from required_packages.R. 
+# Now you can run the script.
+
 library(LatticeKrig)
 library(spam64)
 library(tictoc)

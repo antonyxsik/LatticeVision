@@ -9,8 +9,8 @@ This repository contains everything you need to train image-to-image (I2I) neura
 The paper is currently available on [arXiv](https://arxiv.org/abs/2505.09803).
 
 <p align="center">
-  <img src="results/figures/flowchart_v5.png" alt="The main workflow of LatticeVision." width="700"/>
-<p align="center"><em>Figure: An illustration of the main workflow of LatticeVision. </em></p>
+  <img src="results/figures/flowchart_v5.png" alt="LatticeVision workflow." width="700"/>
+<p align="center"><em>Figure: An illustration of the LatticeVision workflow applied to ESM outputs. </em></p>
 
 ---
 
