@@ -19,7 +19,7 @@ library(here)
 source(here("R_scripts", "helper_funcs.R"))
 
 # Please choose which Climate model you are working with: 
-Climate_model <- "EC3" #can be "CESM", "MPI", "EC3"
+Climate_model <- "CESM" #can be "CESM", "MPI", "EC3"
 
 
 ###########################################
